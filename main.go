@@ -9,6 +9,8 @@ import (
 	"github.com/robertoseba/csv_parser/csv_parser"
 )
 
+// TODO: create a parser for number values in csv
+
 func main() {
 	args := os.Args[1:]
 
