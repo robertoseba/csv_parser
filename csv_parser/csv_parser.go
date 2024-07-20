@@ -32,10 +32,12 @@ func New(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 		config.Separator = ','
 	}
 
+	// Validate config here - check if filters are valid headers and if rules are valid
+	// parse filters and create validator here
+	
 	csvReader := csv.NewReader(ioReader)
 	headers, err := csvReader.Read()
 
-	// parse filters and create validator here
 
 	if err != nil {
 		return nil, fmt.Errorf("error parsing headers: %w", err)

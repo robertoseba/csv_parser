@@ -22,7 +22,7 @@ func main() {
 
 		defer file.Close()
 
-		colFilters := []string{"col1","col4"}
+		colFilters := []string{"col4","col1"}
 
 		csvConfig := &csv_parser.CsvConfig{
 			Separator: ',',
