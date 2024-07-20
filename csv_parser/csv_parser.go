@@ -36,8 +36,8 @@ func New(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 	// parse filters and create validator here
 	
 	csvReader := csv.NewReader(ioReader)
+	
 	headers, err := csvReader.Read()
-
 
 	if err != nil {
 		return nil, fmt.Errorf("error parsing headers: %w", err)
@@ -51,8 +51,7 @@ func New(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 }
 
 func (r *CsvParser) ReadLine() (*Row, error) {
-	record, err := r.reader.Read()
-
+	recordArr, err := r.reader.Read()
 
 	if err == io.EOF{
 		return nil, err
@@ -62,9 +61,9 @@ func (r *CsvParser) ReadLine() (*Row, error) {
 		return nil, fmt.Errorf("error reading line: %w", err)
 	}
 
-	row := NewRow(r.headers.Values(), record)
+	row := NewRow(r.headers.Values(), recordArr)
 
-	// Parse row through validator and return filtered row
+	// Parse row through validator. If row is invalid loop until row is valid 
 	
 	return row.Only(r.config.ColFilters...), nil
 }
