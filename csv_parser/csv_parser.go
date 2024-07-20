@@ -7,16 +7,29 @@ import (
 )
 
 type CsvParser struct {
-	separator 	rune
+	config   	*CsvConfig
 	headers   	*Row 
 	reader    	*csv.Reader
-	colFilters  []string
-	// validators  *Validator
+	// validator 	*Validator
 }
 
-func New(ioReader io.Reader, separator rune) (*CsvParser, error) {
-	if separator == 0 {
-		separator = ','
+type CsvConfig struct {
+	ColFilters 		[]string
+	RowRules 		[]string	
+	Separator 		rune
+}
+
+func New(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
+	if config == nil {
+		config = &CsvConfig{
+			Separator: ',',
+			ColFilters: nil,
+			RowRules: nil,
+		}
+	}
+	
+	if config.Separator == 0 {
+		config.Separator = ','
 	}
 
 	csvReader := csv.NewReader(ioReader)
@@ -29,7 +42,7 @@ func New(ioReader io.Reader, separator rune) (*CsvParser, error) {
 	}
 
 	return &CsvParser{
-		separator: separator,
+		config:    config,
 		reader:    csvReader,
 		headers:   NewRow(headers, headers),
 	}, nil
@@ -48,10 +61,12 @@ func (r *CsvParser) ReadLine() (*Row, error) {
 	}
 
 	row := NewRow(r.headers.Values(), record)
+
+	// Parse row through validator and return filtered row
 	
-	return row, nil
+	return row.Only(r.config.ColFilters...), nil
 }
 
-func (r *CsvParser) Headers() *Row{
-	return r.headers
+func (r *CsvParser) FilteredHeaders() *Row{
+	return r.headers.Only(r.config.ColFilters...)
 }

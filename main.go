@@ -22,14 +22,21 @@ func main() {
 
 		defer file.Close()
 
-		reader, err := csv_parser.New(file, ',')
+		colFilters := []string{"col1","col4"}
+
+		csvConfig := &csv_parser.CsvConfig{
+			Separator: ',',
+			ColFilters: colFilters, 
+		}
+
+		reader, err := csv_parser.New(file,	csvConfig) 
 		
 		if err != nil {
 			fmt.Println("Failed to create reader")
 			panic(err)
 		}
 		
-		fmt.Println(reader.Headers().Str())
+		fmt.Println(reader.FilteredHeaders().Str())
 
 		for {
 			row, err := reader.ReadLine()

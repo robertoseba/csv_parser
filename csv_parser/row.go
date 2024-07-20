@@ -4,11 +4,13 @@ import "strings"
 
 type Row struct {
 	data map[string]string
+	headers []string
 }
 
 func NewRow(headers []string, record []string) *Row {
 	row := &Row{
 		data: make(map[string]string),
+		headers: headers,
 	}
 
 	for i, header := range headers {
@@ -25,9 +27,23 @@ func (r *Row) Str() string {
 func (r *Row) Values() []string{
 	values := make([]string, 0, len(r.data))
 
-	for _, value := range r.data {
-		values = append(values, value)
+	for _, key := range r.headers {
+		values = append(values, r.data[key])
 	}
 
 	return values
+}
+
+func (r *Row) Only(keys ...string) *Row {
+	if len(keys) == 0 {
+		return r
+	}
+
+	newFilteredRowData:= make([]string, len(keys))
+
+	for idx, key:= range keys {
+		newFilteredRowData[idx] = r.data[key]
+	}
+
+	return NewRow(keys, newFilteredRowData) 
 }
