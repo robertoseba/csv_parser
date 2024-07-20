@@ -2,14 +2,49 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strconv"
+
+	"github.com/robertoseba/csv_parser/reader"
 )
 
 func main() {
 	args := os.Args[1:]
 
 	if len(args) == 0 {
+		file, err := os.Open("./data.csv")
+
+		if err != nil {
+			fmt.Println("Failed to open file")
+			panic(err)
+		}
+
+		defer file.Close()
+
+		reader, err := reader.New(file, ',')
+		
+		if err != nil {
+			fmt.Println("Failed to create reader")
+			panic(err)
+		}
+		
+		fmt.Println(reader.Headers().Str())
+
+		for {
+			row, err := reader.ReadLine()
+
+			if err == io.EOF{
+				break
+			}
+
+			if err != nil {
+				fmt.Println("Failed to read line")
+				panic(err)
+			}
+
+			fmt.Println(row.Str())
+		}
 		return
 	}
 

@@ -2,42 +2,54 @@ package reader
 
 import (
 	"encoding/csv"
-	"errors"
-	"os"
+	"fmt"
+	"io"
 )
 
 type Reader struct {
-	filePath  string
 	separator rune
-	headers   []string
+	headers   *Row 
 	reader    *csv.Reader
 }
 
-func New(filePath string, separator rune) (*Reader, error) {
+func New(ioReader io.Reader, separator rune) (*Reader, error) {
 	if separator == 0 {
 		separator = ','
 	}
 
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, errors.New("error opening file")
-	}
+	csvReader := csv.NewReader(ioReader)
+	headers, err := csvReader.Read()
 
-	reader := csv.NewReader(file)
-	headers, err := reader.Read()
 	// parse filters and create validator here
+
 	if err != nil {
-		return nil, errors.New("error reading headers")
+		return nil, fmt.Errorf("error parsing headers: %w", err)
 	}
 
 	return &Reader{
-		filePath:  filePath,
 		separator: separator,
-		reader:    reader,
-		headers:   headers,
+		reader:    csvReader,
+		headers:   NewRow(headers, headers),
 	}, nil
 }
 
-func (r *Reader) ReadLine() ([]string, error) {
-	return r.reader.Read()
+func (r *Reader) ReadLine() (*Row, error) {
+	record, err := r.reader.Read()
+
+
+	if err == io.EOF{
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("error reading line: %w", err)
+	}
+
+	row := NewRow(r.headers.Values(), record)
+	
+	return row, nil
+}
+
+func (r *Reader) Headers() *Row{
+	return r.headers
 }
