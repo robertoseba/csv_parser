@@ -22,11 +22,13 @@ func main() {
 
 		defer file.Close()
 
-		colFilters := []string{"col4","col1"}
+		colFilters := []string{"col4","col1","col2"}
+		rowRules := []string{"col2>row2col2"}
 
 		csvConfig := &csv_parser.CsvConfig{
 			Separator: ',',
 			ColFilters: colFilters, 
+			RowRules: rowRules,
 		}
 
 		reader, err := csv_parser.New(file,	csvConfig) 

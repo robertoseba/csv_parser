@@ -10,7 +10,7 @@ type CsvParser struct {
 	config   	*CsvConfig
 	headers   	*Row 
 	reader    	*csv.Reader
-	// validator 	*Validator
+	validator 	*Validator
 }
 
 type CsvConfig struct {
@@ -32,40 +32,60 @@ func New(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 		config.Separator = ','
 	}
 
-	// Validate config here - check if filters are valid headers and if rules are valid
-	// parse filters and create validator here
-	
 	csvReader := csv.NewReader(ioReader)
 	
-	headers, err := csvReader.Read()
+	headersArr, err := csvReader.Read()
 
 	if err != nil {
 		return nil, fmt.Errorf("error parsing headers: %w", err)
 	}
 
+	headers := NewRow(headersArr, headersArr)
+
+	validator, err := NewValidator(config.RowRules, headers)
+	
+	if err != nil {
+		return nil, fmt.Errorf("error creating validator: %w", err)
+	}
+
 	return &CsvParser{
 		config:    config,
 		reader:    csvReader,
-		headers:   NewRow(headers, headers),
+		headers:   headers,
+		validator: validator,
 	}, nil
 }
 
 func (r *CsvParser) ReadLine() (*Row, error) {
-	recordArr, err := r.reader.Read()
+	var returRow *Row 
+	var returnError error
 
-	if err == io.EOF{
-		return nil, err
+	for {
+		recordArr, e := r.reader.Read()
+
+		if e == io.EOF{
+			returRow = nil
+			returnError = io.EOF
+			break	
+		}
+
+		if e != nil {
+			returnError = fmt.Errorf("error reading line: %w", e)
+			returRow = nil
+			break
+		}
+
+		row:= NewRow(r.headers.Values(), recordArr)
+
+		if r.validator.IsValid(row){
+			returRow = row.Only(r.config.ColFilters...)
+			returnError = nil
+			break
+		}
+		
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("error reading line: %w", err)
-	}
-
-	row := NewRow(r.headers.Values(), recordArr)
-
-	// Parse row through validator. If row is invalid loop until row is valid 
-	
-	return row.Only(r.config.ColFilters...), nil
+	return returRow, returnError 
 }
 
 func (r *CsvParser) FilteredHeaders() *Row{

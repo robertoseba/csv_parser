@@ -47,3 +47,12 @@ func (r *Row) Only(keys ...string) *Row {
 
 	return NewRow(keys, newFilteredRowData) 
 }
+
+func (r *Row) Contains(key string) bool {
+	_, ok := r.data[key]
+	return ok
+}
+
+func (r *Row) GetColumn(key string) string {
+	return r.data[key]
+}
