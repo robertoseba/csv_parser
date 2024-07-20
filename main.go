@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/robertoseba/csv_parser/reader"
+	"github.com/robertoseba/csv_parser/csv_parser"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 
 		defer file.Close()
 
-		reader, err := reader.New(file, ',')
+		reader, err := csv_parser.New(file, ',')
 		
 		if err != nil {
 			fmt.Println("Failed to create reader")

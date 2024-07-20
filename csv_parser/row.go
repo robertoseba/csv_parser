@@ -1,4 +1,4 @@
-package reader
+package csv_parser
 
 import "strings"
 

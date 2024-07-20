@@ -1,4 +1,4 @@
-package reader
+package csv_parser
 
 import (
 	"encoding/csv"
@@ -6,13 +6,15 @@ import (
 	"io"
 )
 
-type Reader struct {
-	separator rune
-	headers   *Row 
-	reader    *csv.Reader
+type CsvParser struct {
+	separator 	rune
+	headers   	*Row 
+	reader    	*csv.Reader
+	colFilters  []string
+	// validators  *Validator
 }
 
-func New(ioReader io.Reader, separator rune) (*Reader, error) {
+func New(ioReader io.Reader, separator rune) (*CsvParser, error) {
 	if separator == 0 {
 		separator = ','
 	}
@@ -26,14 +28,14 @@ func New(ioReader io.Reader, separator rune) (*Reader, error) {
 		return nil, fmt.Errorf("error parsing headers: %w", err)
 	}
 
-	return &Reader{
+	return &CsvParser{
 		separator: separator,
 		reader:    csvReader,
 		headers:   NewRow(headers, headers),
 	}, nil
 }
 
-func (r *Reader) ReadLine() (*Row, error) {
+func (r *CsvParser) ReadLine() (*Row, error) {
 	record, err := r.reader.Read()
 
 
@@ -50,6 +52,6 @@ func (r *Reader) ReadLine() (*Row, error) {
 	return row, nil
 }
 
-func (r *Reader) Headers() *Row{
+func (r *CsvParser) Headers() *Row{
 	return r.headers
 }
