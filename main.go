@@ -10,7 +10,6 @@ import (
 )
 
 // TODO: create a parser for number values in csv
-
 func main() {
 	args := os.Args[1:]
 

@@ -42,6 +42,11 @@ func New(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 
 	headers := NewRow(headersArr, headersArr)
 
+	// TODO: return which col filter is wrong
+	if !isColFiltersValid(config.ColFilters, headers){
+		return nil, fmt.Errorf("error parsing Col filters")
+	}
+
 	validator, err := NewValidator(config.RowRules, headers)
 	
 	if err != nil {
@@ -90,4 +95,16 @@ func (r *CsvParser) ReadLine() (*Row, error) {
 
 func (r *CsvParser) FilteredHeaders() *Row{
 	return r.headers.Only(r.config.ColFilters...)
+}
+
+func isColFiltersValid(colFilters []string, headers *Row) bool{
+	result := true 
+
+	for _, col := range colFilters {
+		if !headers.Contains(col){
+			result = false
+			break
+		}
+	}
+	return result 
 }
