@@ -1,4 +1,4 @@
-package csv_parser
+package parser
 
 import "strings"
 

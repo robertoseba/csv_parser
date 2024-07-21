@@ -7,6 +7,26 @@ import (
 	"os"
 )
 
+func generateCSV(filename string, columnCount int, rowCount int) {
+	file, err := os.Create(filename)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	data := randomData(columnCount, rowCount)
+
+	for _, value := range data {
+		err := writer.Write(value)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 func randomData(columns int, rows int) [][]string {
 	data := make([][]string, rows)
 
@@ -28,24 +48,4 @@ func randomData(columns int, rows int) [][]string {
 		}
 	}
 	return data
-}
-
-func generateCSV(filename string, columnCount int, rowCount int) {
-	file, err := os.Create(filename)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-
-	data := randomData(columnCount, rowCount)
-
-	for _, value := range data {
-		err := writer.Write(value)
-		if err != nil {
-			panic(err)
-		}
-	}
 }

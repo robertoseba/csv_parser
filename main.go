@@ -2,59 +2,17 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"strconv"
 
-	"github.com/robertoseba/csv_parser/csv_parser"
+	"github.com/robertoseba/csv_parser/pkg/app"
 )
 
-// TODO: create a parser for number values in csv
 func main() {
 	args := os.Args[1:]
 
 	if len(args) == 0 {
-		file, err := os.Open("./data.csv")
-
-		if err != nil {
-			fmt.Println("Failed to open file")
-			panic(err)
-		}
-
-		defer file.Close()
-
-		colFilters := []string{"col1", "col2"}
-		rowRules := []string{"col2>row2col2"}
-
-		csvConfig := &csv_parser.CsvConfig{
-			Separator:  ',',
-			ColFilters: colFilters,
-			RowRules:   rowRules,
-		}
-
-		reader, err := csv_parser.New(file, csvConfig)
-
-		if err != nil {
-			fmt.Println("Failed to create reader")
-			panic(err)
-		}
-
-		fmt.Println(reader.FilteredHeaders().Str())
-
-		for {
-			row, err := reader.ReadLine()
-
-			if err == io.EOF {
-				break
-			}
-
-			if err != nil {
-				fmt.Println("Failed to read line")
-				panic(err)
-			}
-
-			fmt.Println(row.Str())
-		}
+		app.Run("./data.csv", "col2", "col2>=1")
 		return
 	}
 
