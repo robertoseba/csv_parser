@@ -24,7 +24,7 @@ func New(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 	if config == nil {
 		config = &CsvConfig{
 			Separator:    ',',
-			ParseNumbers: false,
+			ParseNumbers: false, //TODO: Should implement number parsing?
 			ColFilters:   make([]string, 0),
 			Validator:    nil,
 		}
