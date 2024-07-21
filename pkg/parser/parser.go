@@ -2,6 +2,7 @@ package parser
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 )
@@ -39,9 +40,9 @@ func New(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 
 	headers := NewRow(headersArr, headersArr)
 
-	// TODO: return which col fslter is wrong
+	// TODO: return which col filter is wrong
 	if !isColFiltersValid(config.ColFilters, headers) {
-		return nil, fmt.Errorf("error parsing Col filters")
+		return nil, errors.New("filter for columns has invalid column")
 	}
 
 	return &CsvParser{
@@ -73,7 +74,7 @@ func (r *CsvParser) ReadLine() (*Row, error) {
 		row := NewRow(r.headers.Values(), recordArr)
 
 		if r.config.Validator == nil || r.config.Validator.IsValid(row) {
-			returRow = row.Only(r.config.ColFilters...)
+			returRow = row.Only(r.config.ColFilters)
 			returnError = nil
 			break
 		}
@@ -84,7 +85,7 @@ func (r *CsvParser) ReadLine() (*Row, error) {
 }
 
 func (r *CsvParser) FilteredHeaders() *Row {
-	return r.headers.Only(r.config.ColFilters...)
+	return r.headers.Only(r.config.ColFilters)
 }
 
 func isColFiltersValid(colFilters []string, headers *Row) bool {

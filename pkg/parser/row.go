@@ -34,7 +34,7 @@ func (r *Row) Values() []string {
 	return values
 }
 
-func (r *Row) Only(keys ...string) *Row {
+func (r *Row) Only(keys []string) *Row {
 	if len(keys) == 0 {
 		return r
 	}

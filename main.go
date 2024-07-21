@@ -12,7 +12,7 @@ func main() {
 	args := os.Args[1:]
 
 	if len(args) == 0 {
-		app.Run("./data.csv", "col2", "col2>=1")
+		app.Run("./data.csv", "col2,col3", "col2=row2col2")
 		return
 	}
 
