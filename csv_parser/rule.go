@@ -5,50 +5,54 @@ import (
 	"strings"
 )
 
-type Rule struct{
-	column 		string
-	operator 	func(a, b string) bool	
-	value 		string
+type Rule struct {
+	column   string
+	operator func(a, b string) bool
+	value    string
+}
+
+type IRule interface {
+	Validate(row *Row) bool
 }
 
 var operators = map[string]func(a, b string) bool{
 	"!=": func(a, b string) bool { return a != b },
 	">=": func(a, b string) bool { return a >= b },
 	"<=": func(a, b string) bool { return a <= b },
-	"=": func(a, b string) bool { return a == b },
-	">": func(a, b string) bool { return a > b },
-	"<": func(a, b string) bool { return a < b },
+	"=":  func(a, b string) bool { return a == b },
+	">":  func(a, b string) bool { return a > b },
+	"<":  func(a, b string) bool { return a < b },
 }
 
-func NewRule(strRule string, headers *Row) (*Rule, error){
-	var operator func (a, b string) bool
+func NewRule(strRule string, headers *Row) (IRule, error) {
+	var operator func(a, b string) bool
 	var col, value string
 
-	for operatorKey, operatorFunc := range operators{
-		if strings.Contains(strRule, operatorKey){
+	for operatorKey, operatorFunc := range operators {
+		if strings.Contains(strRule, operatorKey) {
 			operator = operatorFunc
 			parts := strings.Split(strRule, operatorKey)
 			col = parts[0]
 			value = parts[1]
-			break	
+			break
 		}
 	}
 
-	if operator == nil{
+	if operator == nil {
 		return nil, fmt.Errorf("invalid rule: %s", strRule)
 	}
 
-	if !headers.Contains(col) {
+	if !headers.HasColumn(col) {
 		return nil, fmt.Errorf("invalid column for rule: %s", col)
 	}
 
 	return &Rule{
-		column: col,
+		column:   col,
 		operator: operator,
-		value: value,
-	},nil
+		value:    value,
+	}, nil
 }
 
-func (r *Rule) Validate(row *Row) bool{
+func (r *Rule) Validate(row *Row) bool {
 	return r.operator(row.GetColumn(r.column), r.value)
 }

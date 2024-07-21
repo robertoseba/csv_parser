@@ -23,28 +23,28 @@ func main() {
 
 		defer file.Close()
 
-		colFilters := []string{"col4","col1","col2"}
+		colFilters := []string{"col1", "col2"}
 		rowRules := []string{"col2>row2col2"}
 
 		csvConfig := &csv_parser.CsvConfig{
-			Separator: ',',
-			ColFilters: colFilters, 
-			RowRules: rowRules,
+			Separator:  ',',
+			ColFilters: colFilters,
+			RowRules:   rowRules,
 		}
 
-		reader, err := csv_parser.New(file,	csvConfig) 
-		
+		reader, err := csv_parser.New(file, csvConfig)
+
 		if err != nil {
 			fmt.Println("Failed to create reader")
 			panic(err)
 		}
-		
+
 		fmt.Println(reader.FilteredHeaders().Str())
 
 		for {
 			row, err := reader.ReadLine()
 
-			if err == io.EOF{
+			if err == io.EOF {
 				break
 			}
 

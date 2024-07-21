@@ -3,13 +3,13 @@ package csv_parser
 import "strings"
 
 type Row struct {
-	data map[string]string
+	data    map[string]string
 	headers []string
 }
 
 func NewRow(headers []string, record []string) *Row {
 	row := &Row{
-		data: make(map[string]string),
+		data:    make(map[string]string),
 		headers: headers,
 	}
 
@@ -24,7 +24,7 @@ func (r *Row) Str() string {
 	return strings.Join(r.Values(), ",")
 }
 
-func (r *Row) Values() []string{
+func (r *Row) Values() []string {
 	values := make([]string, 0, len(r.data))
 
 	for _, key := range r.headers {
@@ -39,16 +39,16 @@ func (r *Row) Only(keys ...string) *Row {
 		return r
 	}
 
-	newFilteredRowData:= make([]string, len(keys))
+	newFilteredRowData := make([]string, len(keys))
 
-	for idx, key:= range keys {
+	for idx, key := range keys {
 		newFilteredRowData[idx] = r.data[key]
 	}
 
-	return NewRow(keys, newFilteredRowData) 
+	return NewRow(keys, newFilteredRowData)
 }
 
-func (r *Row) Contains(key string) bool {
+func (r *Row) HasColumn(key string) bool {
 	_, ok := r.data[key]
 	return ok
 }

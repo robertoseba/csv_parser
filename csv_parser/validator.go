@@ -1,7 +1,7 @@
 package csv_parser
 
 type Validator struct {
-	rules []Rule
+	rules   []IRule
 	headers *Row
 }
 
@@ -16,7 +16,7 @@ func NewValidator(rules []string, headers *Row) (*Validator, error) {
 			return nil, err
 		}
 
-		validator.rules = append(validator.rules, *r)
+		validator.rules = append(validator.rules, r)
 	}
 
 	return validator, nil
@@ -31,5 +31,3 @@ func (v *Validator) IsValid(row *Row) bool {
 
 	return true
 }
-
- 
