@@ -40,7 +40,7 @@ func Run(filePath string, colFilters string, rowRules string) {
 		panic(err)
 	}
 
-	fmt.Println(reader.FilteredHeaders().Str())
+	fmt.Println(reader.Headers().Str())
 
 	for {
 		row, err := reader.ReadLine()
