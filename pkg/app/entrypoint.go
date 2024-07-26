@@ -10,37 +10,29 @@ import (
 )
 
 func Run(filePath string, colFilters string, rowRules string) {
-
-	file, err := os.Open("./data.csv")
-
-	if err != nil {
-		fmt.Println("Failed to open file")
-		panic(err)
-	}
-
+	file := openFile(filePath)
 	defer file.Close()
 
-	rules, err := parser.NewRulesFrom(parseRowRules(rowRules))
+	rules := createRules(rowRules)
 
-	if err != nil {
-		fmt.Println("Failed to create rules")
-		panic(err)
+	var validator *parser.Validator
+	if rules != nil {
+		validator = parser.NewValidator(rules)
 	}
 
 	csvConfig := &parser.CsvConfig{
 		Separator:  ',',
-		ColFilters: parseColFilters(colFilters),
-		Validator:  parser.NewValidator(rules),
+		ColFilters: splitStringColFilters(colFilters),
+		Validator:  validator,
 	}
 
-	reader, err := parser.New(file, csvConfig)
-
+	reader, err := parser.NewParser(file, csvConfig)
 	if err != nil {
 		fmt.Println("Failed to create reader")
 		panic(err)
 	}
 
-	fmt.Println(reader.Headers().Str())
+	fmt.Println(reader.Headers())
 
 	for {
 		row, err := reader.ReadLine()
@@ -49,26 +41,57 @@ func Run(filePath string, colFilters string, rowRules string) {
 			break
 		}
 
+		if err == parser.ErrInvalidRow {
+			continue
+		}
+
 		if err != nil {
-			fmt.Println("Failed to read line")
+			fmt.Println("Unexpected error reading line:", err)
 			panic(err)
 		}
 
-		fmt.Println(row.Str())
+		fmt.Println(row)
 	}
-	return
 }
 
-func parseColFilters(colFilters string) []string {
+func splitStringColFilters(colFilters string) []string {
 	if strings.Trim(colFilters, " ") == "" {
 		return nil
 	}
 	return strings.Split(colFilters, ",")
 }
 
-func parseRowRules(rowRules string) []string {
-	if strings.Trim(rowRules, " ") == "" {
+func openFile(filePath string) *os.File {
+	file, err := os.Open(filePath)
+	if err != nil {
+		fmt.Println("Failed to open file:", err)
+		panic(err)
+	}
+	return file
+}
+
+func createRules(rowRulesStr string) []parser.IRule {
+	if strings.Trim(rowRulesStr, " ") == "" {
 		return nil
 	}
-	return strings.Split(rowRules, "\n")
+
+	arrRuleStrings := strings.Split(rowRulesStr, ";")
+
+	rules := make([]parser.IRule, 0, len(arrRuleStrings))
+
+	for _, strRule := range arrRuleStrings {
+		if strings.Trim(strRule, " ") == "" {
+			continue
+		}
+
+		r, err := parser.NewRule(strRule)
+		if err != nil {
+			fmt.Printf("Invalid rule: %s\n", strRule)
+			panic(err)
+		}
+
+		rules = append(rules, r)
+	}
+
+	return rules
 }

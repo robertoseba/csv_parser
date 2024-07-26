@@ -20,7 +20,7 @@ func NewRow(headers []string, record []string) *Row {
 	return row
 }
 
-func (r *Row) Str() string {
+func (r *Row) String() string {
 	return strings.Join(r.Values(), ",")
 }
 

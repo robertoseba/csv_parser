@@ -54,26 +54,6 @@ func NewRule(strRule string) (IRule, error) {
 	}, nil
 }
 
-func NewRulesFrom(strRules []string) ([]IRule, error) {
-	if len(strRules) == 0 {
-		return nil, nil
-	}
-
-	rules := make([]IRule, 0, len(strRules))
-
-	for _, strRule := range strRules {
-		r, err := NewRule(strRule)
-
-		if err != nil {
-			return nil, err
-		}
-
-		rules = append(rules, r)
-	}
-
-	return rules, nil
-}
-
 // TODO: Implement conversion of string to number if necessary
 func (r *Rule) Validate(row *Row) bool {
 	return r.operator(row.GetColumn(r.column), r.value)

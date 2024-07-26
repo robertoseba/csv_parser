@@ -11,11 +11,9 @@ func NewValidator(rules []IRule) *Validator {
 		rulesByColumn[rule.Column()] = append(rulesByColumn[rule.Column()], rule)
 	}
 
-	validator := &Validator{
+	return &Validator{
 		rulesByColumn: rulesByColumn,
 	}
-
-	return validator
 }
 
 // TODO: Implement multiple rules for the same column
