@@ -28,8 +28,8 @@ func Run(filePath string, colFilters string, rowRules string) {
 
 	reader, err := parser.NewParser(file, csvConfig)
 	if err != nil {
-		fmt.Println("Failed to create reader")
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Error generating csv: %s\n", err)
+		os.Exit(1)
 	}
 
 	fmt.Println(reader.Headers())
@@ -46,8 +46,8 @@ func Run(filePath string, colFilters string, rowRules string) {
 		}
 
 		if err != nil {
-			fmt.Println("Unexpected error reading line:", err)
-			panic(err)
+			fmt.Fprintf(os.Stderr, "Unexpected error reading line: %s\n", err)
+			os.Exit(1)
 		}
 
 		fmt.Println(row)
@@ -64,8 +64,8 @@ func splitStringColFilters(colFilters string) []string {
 func openFile(filePath string) *os.File {
 	file, err := os.Open(filePath)
 	if err != nil {
-		fmt.Println("Failed to open file:", err)
-		panic(err)
+		fmt.Fprintf(os.Stderr, "Failed to open file: %s\n", filePath)
+		os.Exit(1)
 	}
 	return file
 }
@@ -86,8 +86,8 @@ func createRules(rowRulesStr string) []parser.IRule {
 
 		r, err := parser.NewRule(strRule)
 		if err != nil {
-			fmt.Printf("Invalid rule: %s\n", strRule)
-			panic(err)
+			fmt.Fprintf(os.Stderr, "Invalid rule: %s\n", strRule)
+			os.Exit(1)
 		}
 
 		rules = append(rules, r)
