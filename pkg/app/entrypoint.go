@@ -14,7 +14,6 @@ func Run(filePath string, colFilters string, rowRules string) {
 	defer file.Close()
 
 	rules := createRules(rowRules)
-
 	var validator *parser.Validator
 	if rules != nil {
 		validator = parser.NewValidator(rules)
