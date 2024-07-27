@@ -4,6 +4,7 @@ package main
 import (
 	"encoding/csv"
 	"fmt"
+	"math/rand"
 	"os"
 )
 
@@ -44,7 +45,12 @@ func randomData(columns int, rows int) [][]string {
 		data[i] = make([]string, columns)
 
 		for j := 0; j < columns; j++ {
-			data[i][j] = "row" + fmt.Sprintf("%d", i) + "col" + fmt.Sprintf("%d", j+1)
+			if j == 0 {
+				data[i][j] = "row_" + fmt.Sprintf("%d", i)
+				continue
+			}
+			data[i][j] = fmt.Sprintf("%d", rand.Intn(1000))
+
 		}
 	}
 	return data
