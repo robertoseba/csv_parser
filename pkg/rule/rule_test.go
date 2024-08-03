@@ -13,8 +13,8 @@ func TestRuleFromStr(t *testing.T) {
 	}{
 		{name: "no-rules", inputParams: "", expected: nil},
 		{name: "simple-rule-2-cols", inputParams: "col1:eq(5)||eq(23);col2:!eq(3)&&lt(10)", expected: []IRule{
-			&EqRule{Rule: Rule{column: "col1", value: "5", isValueNumber: true}},
-			&NotEqRule{Rule: Rule{column: "col2", value: "3", isValueNumber: true}},
+			&EqRule{Rule: Rule{column: "col1", strValue: "5", isValueNumber: true}},
+			&NotEqRule{Rule: Rule{column: "col2", strValue: "3", isValueNumber: true}},
 		}},
 	}
 	for _, test := range tests {

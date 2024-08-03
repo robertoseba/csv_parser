@@ -14,5 +14,5 @@ func (rule *NotEqRule) Validate(row *row.Row) bool {
 		return ruleValue != colValue
 	}
 
-	return rule.value != row.GetColumn(rule.column)
+	return rule.strValue != row.GetColumn(rule.column)
 }

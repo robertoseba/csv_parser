@@ -25,7 +25,7 @@ func NewRuleFromStr(strRule string) (IRule, error) {
 			}
 			rule := Rule{
 				column:        column,
-				value:         value,
+				strValue:      value,
 				isValueNumber: isValueNumber,
 			}
 

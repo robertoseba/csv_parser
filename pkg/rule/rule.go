@@ -9,56 +9,80 @@ import (
 	"github.com/robertoseba/csv_parser/pkg/row"
 )
 
-type IRule interface {
-	Validate(row *row.Row) bool
-	Column() string
-	IsNumber() bool
-}
+type logicalOperatorType string
+
+const AND_OPERATOR logicalOperatorType = "&&"
+const OR_OPERATOR logicalOperatorType = "||"
 
 type Rule struct {
-	column        string
-	value         string
-	isValueNumber bool
-	// OrlogicalOpt  bool
+	strValue     string
+	numericValue float64
+	operator     string
 }
 
-func (r *Rule) Column() string {
+func (r *Rule) IsValid(rowValue string, castAsNumber bool) bool {
+	if castAsNumber {
+		rowValueFloat, err := strconv.ParseFloat(rowValue, 64)
+		if err == nil {
+			return compareValues(rowValueFloat, r.numericValue, r.operator)
+		}
+
+	}
+	return compareValues(rowValue, r.strValue, r.operator)
+}
+
+type ColRules struct {
+	column          string
+	rules           []Rule
+	logicalOperator logicalOperatorType
+	castAsNumber    bool
+}
+
+func (r *ColRules) Column() string {
 	return r.column
 }
 
-func (r *Rule) IsNumber() bool {
-	return r.isValueNumber
+func (r *ColRules) IsNumber() bool {
+	return r.castAsNumber
 }
 
-func (rule *Rule) preProcessNumbers(rowValue string) (ruleValue, colValue float64, err error) {
-	if rule.isValueNumber {
-		rowValueFloat, err := strconv.ParseFloat(rowValue, 64)
-		if err == nil {
-			ruleValueFloat, _ := strconv.ParseFloat(rule.value, 64)
-			return ruleValueFloat, rowValueFloat, nil
+func (r *ColRules) IsValid(row *row.Row) bool {
+	result := true
+
+	for _, rule := range r.rules {
+		if rule.IsValid(row.GetColumn(r.column)) {
+			if r.logicalOperator == OR_OPERATOR {
+				break
+			}
+		} else {
+			if r.logicalOperator == AND_OPERATOR {
+				result = false
+				break
+			}
 		}
 	}
 
-	return 0, 0, fmt.Errorf("cannot convert values to numbers")
+	return result
 }
 
-func RulesFromStr(ruleStr string) ([]IRule, error) {
+/**
+* Returns a collection of rules ordered by column's name
+* Each column can have multiple rules and have a logical operator
+* that defines how the rules should be evaluated
+ */
+func RulesFromStr(ruleStr string) (map[string][]ColRules, error) {
 	if strings.Trim(ruleStr, " ") == "" {
 		return nil, nil
 	}
 
 	expressions := []string{"!eq", "eq", "gt", "lt", "gte", "lte"}
-	// logicalOperators := []string{"&&", "||"}
 
-	// Rule formats examples: eq(5) or !eq(3)
+	// Rule formats examples: eq(5) or !eq(3) or ||eq(5) or &&eq(5)
 	regexRuleFormat := regexp.MustCompile(`\s*(\|\||&&)?(` + strings.Join(expressions, "|") + `)\s*\((\w+)\)\s*`)
 
-	// logicalOperators := []string{"AND", "OR"}
-	// regexLogialOperators := regexp.MustCompile(`\s*(` + strings.Join(logicalOperators, "|") + `)\s*`)
+	colRules := strings.Split(ruleStr, ";")
 
-	splittedGroupRules := strings.Split(ruleStr, ";")
-
-	for _, strRule := range splittedGroupRules {
+	for _, strRule := range colRules {
 		if strings.Trim(strRule, " ") == "" {
 			continue
 		}
@@ -68,22 +92,30 @@ func RulesFromStr(ruleStr string) ([]IRule, error) {
 			return nil, fmt.Errorf("invalid rule format")
 		}
 		fmt.Println(column)
-		for _, rule := range regexRuleFormat.FindAllString(rules, -1) {
-			fmt.Println(rule)
+
+		if strings.Contains(rules, string(OR_OPERATOR)) && strings.Contains(rules, string(AND_OPERATOR)) {
+			return nil, fmt.Errorf("invalid rule format. Rule can only contain one type of logical operator per column")
 		}
 
+		logicalOperator := AND_OPERATOR
+
+		for _, rule := range regexRuleFormat.FindAllString(rules, -1) {
+			switch rule[0:2] {
+			case "&&":
+				rule = rule[2:]
+			case "||":
+				logicalOperator = OR_OPERATOR
+				rule = rule[2:]
+			}
+
+			fmt.Println(rule)
+
+		}
+		fmt.Println(logicalOperator)
+
 	}
-	// rules := regexLogialOperators.Split(strRule, -1)
-
-	// for idx, rule := range rules {
-	// 	if strings.Trim(rule, " ") == "" {
-	// 		continue
-	// 	}
-
-	// }
-
-	return []IRule{
-		&EqRule{Rule: Rule{column: "col1", value: "5", isValueNumber: true}},
-		&NotEqRule{Rule: Rule{column: "col2", value: "3", isValueNumber: true}},
+	return []Rule{
+		&EqRule{Rule: Rule{column: "col1", strValue: "5", isValueNumber: true}},
+		&NotEqRule{Rule: Rule{column: "col2", strValue: "3", isValueNumber: true}},
 	}, nil
 }
