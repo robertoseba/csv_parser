@@ -20,15 +20,15 @@ type Rule struct {
 	operator     string
 }
 
-func (r *Rule) IsValid(rowValue string, castAsNumber bool) bool {
+func (rule *Rule) IsValid(rowValue string, castAsNumber bool) bool {
 	if castAsNumber {
 		rowValueFloat, err := strconv.ParseFloat(rowValue, 64)
 		if err == nil {
-			return compareValues(rowValueFloat, r.numericValue, r.operator)
+			return compareValues(rowValueFloat, rule.numericValue, rule.operator)
 		}
 
 	}
-	return compareValues(rowValue, r.strValue, r.operator)
+	return compareValues(rowValue, rule.strValue, rule.operator)
 }
 
 type ColRules struct {
