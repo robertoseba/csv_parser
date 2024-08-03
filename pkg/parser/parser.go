@@ -5,18 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"io"
+
+	"github.com/robertoseba/csv_parser/pkg/row"
+	"github.com/robertoseba/csv_parser/pkg/rule"
 )
 
 type CsvConfig struct {
 	Separator    rune
 	ParseNumbers bool
 	ColFilters   []string
-	Validator    *Validator
+	Validator    *rule.Validator
 }
 
 type CsvParser struct {
 	config  *CsvConfig
-	headers *Row
+	headers *row.Row
 	reader  *csv.Reader
 }
 
@@ -37,7 +40,7 @@ func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 		return nil, fmt.Errorf("error parsing headers: %w", err)
 	}
 
-	headers := NewRow(headersArr, headersArr)
+	headers := row.NewRow(headersArr, headersArr)
 
 	if config.Validator != nil && !hasValidColumns(config.Validator.Columns(), headers) {
 		return nil, errors.New("validator has invalid column")
@@ -54,7 +57,7 @@ func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 	}, nil
 }
 
-func (r *CsvParser) ReadLine() (*Row, error) {
+func (r *CsvParser) ReadLine() (*row.Row, error) {
 	recordArr, e := r.reader.Read()
 
 	if e == io.EOF {
@@ -65,7 +68,7 @@ func (r *CsvParser) ReadLine() (*Row, error) {
 		return nil, fmt.Errorf("unexpected error reading line: %w", e)
 	}
 
-	row := NewRow(r.headers.Values(), recordArr)
+	row := row.NewRow(r.headers.Values(), recordArr)
 
 	if r.config.Validator == nil || r.config.Validator.IsValid(row) {
 		return row.Only(r.config.ColFilters), nil
@@ -74,11 +77,11 @@ func (r *CsvParser) ReadLine() (*Row, error) {
 	return nil, ErrInvalidRow
 }
 
-func (r *CsvParser) Headers() *Row {
+func (r *CsvParser) Headers() *row.Row {
 	return r.headers.Only(r.config.ColFilters)
 }
 
-func hasValidColumns(cols []string, headers *Row) bool {
+func hasValidColumns(cols []string, headers *row.Row) bool {
 	for _, col := range cols {
 		if !headers.HasColumn(col) {
 			return false

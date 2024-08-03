@@ -1,4 +1,6 @@
-package parser
+package rule
+
+import "github.com/robertoseba/csv_parser/pkg/row"
 
 type Validator struct {
 	rulesByColumn map[string][]IRule
@@ -17,7 +19,7 @@ func NewValidator(rules []IRule) *Validator {
 }
 
 // TODO: Implement multiple rules for the same column
-func (v *Validator) IsValid(row *Row) bool {
+func (v *Validator) IsValid(row *row.Row) bool {
 	for _, rules := range v.rulesByColumn {
 		for _, rule := range rules {
 			if !rule.Validate(row) {
