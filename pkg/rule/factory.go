@@ -7,7 +7,7 @@ import (
 )
 
 /**
-* Returns a collection of rules ordered by column's name
+* Returns a collection of rules grouped by column's name
 * Each column can have multiple rules and have a logical operator
 * that defines how the rules should be evaluated
  */
@@ -49,14 +49,15 @@ func RulesFromStr(ruleStr string) (map[string][]ColRules, error) {
 				rule = rule[2:]
 			}
 
-			fmt.Println(rule)
+			//TODO: extract the operator and value from the rule
+			operator, value, _ := strings.Cut(rule, "(")
+			value = strings.Trim(value, ")")
+			fmt.Println(operator)
+			fmt.Println(value)
 
 		}
 		fmt.Println(logicalOperator)
 
 	}
-	return []Rule{
-		&EqRule{Rule: Rule{column: "col1", strValue: "5", isValueNumber: true}},
-		&NotEqRule{Rule: Rule{column: "col2", strValue: "3", isValueNumber: true}},
-	}, nil
+	return nil, nil
 }
