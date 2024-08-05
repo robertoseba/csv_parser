@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestRuleFromStr(t *testing.T) {
+func TestFactoryRuleFromStr(t *testing.T) {
 	expectedFloat1 := 5.0
 	expectedFloat2 := 23.0
 	expectedFloat3 := 3.0
@@ -51,6 +51,19 @@ func TestRuleFromStr(t *testing.T) {
 					isNumber:        true,
 					rules: []Rule{
 						{value: "5", operator: "eq", floatValue: &expectedFloat1},
+					},
+				},
+			},
+		},
+		{name: "implict-and-logical-operator", inputParams: "col1:eq(5)lte(10)",
+			expectedColRules: map[string]*ColRules{
+				"col1": {
+					logicalOperator: "&&",
+					column:          "col1",
+					isNumber:        true,
+					rules: []Rule{
+						{value: "5", operator: "eq", floatValue: &expectedFloat1},
+						{value: "10", operator: "lte", floatValue: &expectedFloat4},
 					},
 				},
 			},
