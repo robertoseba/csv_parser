@@ -1,7 +1,7 @@
 package rule
 
 import (
-	"fmt"
+	"errors"
 	"regexp"
 	"strconv"
 	"strings"
@@ -33,6 +33,8 @@ const COL_RULE_SEPARATOR = ":"
 // Rule formats examples: eq(5) or !eq(3) or ||eq(5) or &&eq(5)
 var RULE_FORMAT = `\s*(\|\||&&)?(` + strings.Join(ALL_RULES, "|") + `)\s*\((\w+)\)\s*`
 
+var ErrInvalidRule = errors.New("invalid rule format")
+
 /**
 * Returns a collection of rules grouped by column's name
 * Each column can have multiple rules and have a logical operator
@@ -56,10 +58,10 @@ func RulesFromStr(ruleStr string) (map[string]*ColRules, error) {
 
 		column, rules, ok := strings.Cut(strRule, COL_RULE_SEPARATOR)
 		if !ok {
-			return nil, fmt.Errorf("invalid rule format")
+			return nil, ErrInvalidRule
 		}
 		if strings.Contains(rules, string(OR_OPERATOR)) && strings.Contains(rules, string(AND_OPERATOR)) {
-			return nil, fmt.Errorf("invalid rule format. Rule can only contain one type of logical operator per column")
+			return nil, ErrInvalidRule
 		}
 
 		logicalOperator := AND_OPERATOR
@@ -67,7 +69,7 @@ func RulesFromStr(ruleStr string) (map[string]*ColRules, error) {
 
 		rulesByCols[column] = &ColRules{
 			column: column,
-			rules:  make([]*Rule, len(splittedStringRules)),
+			rules:  make([]Rule, len(splittedStringRules)),
 		}
 
 		for idx, strRule := range splittedStringRules {
@@ -88,12 +90,15 @@ func RulesFromStr(ruleStr string) (map[string]*ColRules, error) {
 			}
 
 			ruleNumber, err := strconv.ParseFloat(ruleValue, 64)
+
 			if err == nil {
-				rulesByCols[column].castAsNumber = true
+				rulesByCols[column].isNumber = true
 				rule.floatValue = &ruleNumber
+			} else {
+				rulesByCols[column].isNumber = false
 			}
 
-			rulesByCols[column].rules[idx] = &rule
+			rulesByCols[column].rules[idx] = rule
 		}
 
 		rulesByCols[column].logicalOperator = logicalOperator

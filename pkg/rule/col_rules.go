@@ -9,9 +9,9 @@ const OR_OPERATOR logicalOperatorType = "||"
 
 type ColRules struct {
 	column          string
-	rules           []*Rule
+	rules           []Rule
 	logicalOperator logicalOperatorType
-	castAsNumber    bool
+	isNumber        bool
 }
 
 func (r *ColRules) Column() string {
@@ -19,7 +19,7 @@ func (r *ColRules) Column() string {
 }
 
 func (r *ColRules) IsNumber() bool {
-	return r.castAsNumber
+	return r.isNumber
 }
 
 func (r *ColRules) IsValid(row *row.Row) bool {
