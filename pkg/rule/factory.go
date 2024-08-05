@@ -3,61 +3,101 @@ package rule
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 )
+
+type allowedRules string
+
+const (
+	EQ_RULE  allowedRules = "eq"
+	GT_RULE  allowedRules = "gt"
+	LT_RULE  allowedRules = "lt"
+	GTE_RULE allowedRules = "gte"
+	LTE_RULE allowedRules = "lte"
+	NE_RULE  allowedRules = "!eq"
+)
+
+var ALL_RULES = []string{
+	string(EQ_RULE),
+	string(GT_RULE),
+	string(LT_RULE),
+	string(GTE_RULE),
+	string(LTE_RULE),
+	string(NE_RULE),
+}
+
+const RULE_SEPARATOR = ";"
+const COL_RULE_SEPARATOR = ":"
+
+// Rule formats examples: eq(5) or !eq(3) or ||eq(5) or &&eq(5)
+var RULE_FORMAT = `\s*(\|\||&&)?(` + strings.Join(ALL_RULES, "|") + `)\s*\((\w+)\)\s*`
 
 /**
 * Returns a collection of rules grouped by column's name
 * Each column can have multiple rules and have a logical operator
 * that defines how the rules should be evaluated
  */
-func RulesFromStr(ruleStr string) (map[string][]ColRules, error) {
+func RulesFromStr(ruleStr string) (map[string]*ColRules, error) {
 	if strings.Trim(ruleStr, " ") == "" {
 		return nil, nil
 	}
 
-	expressions := []string{"!eq", "eq", "gt", "lt", "gte", "lte"}
+	colRules := strings.Split(ruleStr, RULE_SEPARATOR)
 
-	// Rule formats examples: eq(5) or !eq(3) or ||eq(5) or &&eq(5)
-	regexRuleFormat := regexp.MustCompile(`\s*(\|\||&&)?(` + strings.Join(expressions, "|") + `)\s*\((\w+)\)\s*`)
+	rulesByCols := make(map[string]*ColRules, len(colRules))
 
-	colRules := strings.Split(ruleStr, ";")
+	regexRuleFormat := regexp.MustCompile(RULE_FORMAT)
 
 	for _, strRule := range colRules {
 		if strings.Trim(strRule, " ") == "" {
 			continue
 		}
 
-		column, rules, ok := strings.Cut(strRule, ":")
+		column, rules, ok := strings.Cut(strRule, COL_RULE_SEPARATOR)
 		if !ok {
 			return nil, fmt.Errorf("invalid rule format")
 		}
-		fmt.Println(column)
-
 		if strings.Contains(rules, string(OR_OPERATOR)) && strings.Contains(rules, string(AND_OPERATOR)) {
 			return nil, fmt.Errorf("invalid rule format. Rule can only contain one type of logical operator per column")
 		}
 
 		logicalOperator := AND_OPERATOR
+		splittedStringRules := regexRuleFormat.FindAllString(rules, -1)
 
-		for _, rule := range regexRuleFormat.FindAllString(rules, -1) {
-			switch rule[0:2] {
+		rulesByCols[column] = &ColRules{
+			column: column,
+			rules:  make([]Rule, len(splittedStringRules)),
+		}
+
+		for idx, strRule := range splittedStringRules {
+			switch strRule[0:2] {
 			case "&&":
-				rule = rule[2:]
+				strRule = strRule[2:]
 			case "||":
 				logicalOperator = OR_OPERATOR
-				rule = rule[2:]
+				strRule = strRule[2:]
 			}
 
-			//TODO: extract the operator and value from the rule
-			operator, value, _ := strings.Cut(rule, "(")
-			value = strings.Trim(value, ")")
-			fmt.Println(operator)
-			fmt.Println(value)
+			ruleOperator, ruleValue, _ := strings.Cut(strRule, "(")
+			ruleValue = strings.Trim(ruleValue, ")")
 
+			rule := Rule{
+				operator: ruleOperator,
+				value:    ruleValue,
+			}
+
+			ruleNumber, err := strconv.ParseFloat(ruleValue, 64)
+			if err == nil {
+				rulesByCols[column].castAsNumber = true
+				rule.floatValue = &ruleNumber
+			}
+
+			rulesByCols[column].rules[idx] = rule
 		}
-		fmt.Println(logicalOperator)
+
+		rulesByCols[column].logicalOperator = logicalOperator
 
 	}
-	return nil, nil
+	return rulesByCols, nil
 }
