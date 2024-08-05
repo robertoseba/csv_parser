@@ -11,7 +11,7 @@ const RULE_SEPARATOR = ";"
 const COL_RULE_SEPARATOR = ":"
 
 // Rule formats examples: eq(5) or !eq(3) or ||eq(5) or &&eq(5)
-var RULE_FORMAT = `\s*(\|\||&&)?(` + strings.Join(ALL_RULES, "|") + `)\s*\((\w+)\)\s*`
+var STR_RULE_FORMAT = `\s*(\|\||&&)?(` + strings.Join(ALL_RULES, "|") + `)\s*\((\w+)\)\s*`
 
 var ErrInvalidRule = errors.New("invalid rule format")
 
@@ -29,7 +29,7 @@ func RulesFromStr(ruleStr string) (map[string]*ColRules, error) {
 
 	rulesByCols := make(map[string]*ColRules, len(colRules))
 
-	regexRuleFormat := regexp.MustCompile(RULE_FORMAT)
+	regexRuleFormat := regexp.MustCompile(STR_RULE_FORMAT)
 
 	for _, strRule := range colRules {
 		if strings.Trim(strRule, " ") == "" {
