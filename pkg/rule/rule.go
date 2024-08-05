@@ -6,10 +6,30 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
+type allowedRules string
+
+const (
+	EQ_RULE  allowedRules = "eq"
+	GT_RULE  allowedRules = "gt"
+	LT_RULE  allowedRules = "lt"
+	GTE_RULE allowedRules = "gte"
+	LTE_RULE allowedRules = "lte"
+	NE_RULE  allowedRules = "!eq"
+)
+
+var ALL_RULES = []string{
+	string(EQ_RULE),
+	string(GT_RULE),
+	string(LT_RULE),
+	string(GTE_RULE),
+	string(LTE_RULE),
+	string(NE_RULE),
+}
+
 type Rule struct {
 	value      string
 	floatValue *float64
-	operator   string
+	operator   allowedRules
 }
 
 func (rule *Rule) IsValid(rowValue string) bool {
@@ -23,19 +43,19 @@ func (rule *Rule) IsValid(rowValue string) bool {
 	return compareValues(rowValue, rule.value, rule.operator)
 }
 
-func compareValues[T constraints.Ordered](first, second T, operator string) bool {
+func compareValues[T constraints.Ordered](first, second T, operator allowedRules) bool {
 	switch operator {
-	case "eq":
+	case EQ_RULE:
 		return first == second
-	case "gt":
+	case GT_RULE:
 		return first > second
-	case "lt":
+	case LT_RULE:
 		return first < second
-	case "gte":
+	case GTE_RULE:
 		return first >= second
-	case "lte":
+	case LTE_RULE:
 		return first <= second
-	case "!eq":
+	case NE_RULE:
 		return first != second
 	default:
 		panic("invalid operator")

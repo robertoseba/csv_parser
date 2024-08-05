@@ -7,26 +7,6 @@ import (
 	"strings"
 )
 
-type allowedRules string
-
-const (
-	EQ_RULE  allowedRules = "eq"
-	GT_RULE  allowedRules = "gt"
-	LT_RULE  allowedRules = "lt"
-	GTE_RULE allowedRules = "gte"
-	LTE_RULE allowedRules = "lte"
-	NE_RULE  allowedRules = "!eq"
-)
-
-var ALL_RULES = []string{
-	string(EQ_RULE),
-	string(GT_RULE),
-	string(LT_RULE),
-	string(GTE_RULE),
-	string(LTE_RULE),
-	string(NE_RULE),
-}
-
 const RULE_SEPARATOR = ";"
 const COL_RULE_SEPARATOR = ":"
 
@@ -85,7 +65,7 @@ func RulesFromStr(ruleStr string) (map[string]*ColRules, error) {
 			ruleValue = strings.Trim(ruleValue, ")")
 
 			rule := Rule{
-				operator: ruleOperator,
+				operator: allowedRules(ruleOperator),
 				value:    ruleValue,
 			}
 
