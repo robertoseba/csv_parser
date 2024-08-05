@@ -13,21 +13,22 @@ func TestRuleFromStr(t *testing.T) {
 	}{
 		{name: "no-rules", inputParams: "", expected: nil},
 		{name: "simple-rule-2-cols", inputParams: "col1:eq(5)||eq(23);col2:!eq(3)&&lt(10)",
-			expected: make(map[string]*ColRules, 2)}, {
-			"col1": &ColRules{
-				logicalOperator: "||",
-				column:          "col1",
-				Rules: []*Rule{
-					&Rule{value: "5", operator: "eq", floatValue: 5},
-					&Rule{value: "23", operator: "eq", floatValue: 23},
+			expected: map[string]*ColRules{
+				"col1": &ColRules{
+					logicalOperator: "||",
+					column:          "col1",
+					rules: []*Rule{
+						&Rule{value: "5", operator: "eq", floatValue: nil},
+						&Rule{value: "23", operator: "eq", floatValue: nil},
+					},
 				},
-			},
-			"col2": &ColRules{
-				logicalOperator: "&&",
-				column:          "col2",
-				Rules: []*Rule{
-					&Rule{value: "3", operator: "!eq", floatValue: 3},
-					&Rule{value: "10", operator: "lt", floatValue: 10},
+				"col2": &ColRules{
+					logicalOperator: "&&",
+					column:          "col2",
+					rules: []*Rule{
+						&Rule{value: "3", operator: "!eq", floatValue: nil},
+						&Rule{value: "10", operator: "lt", floatValue: nil},
+					},
 				},
 			},
 		},
