@@ -67,7 +67,7 @@ func RulesFromStr(ruleStr string) (map[string]*ColRules, error) {
 
 		rulesByCols[column] = &ColRules{
 			column: column,
-			rules:  make([]Rule, len(splittedStringRules)),
+			rules:  make([]*Rule, len(splittedStringRules)),
 		}
 
 		for idx, strRule := range splittedStringRules {
@@ -93,7 +93,7 @@ func RulesFromStr(ruleStr string) (map[string]*ColRules, error) {
 				rule.floatValue = &ruleNumber
 			}
 
-			rulesByCols[column].rules[idx] = rule
+			rulesByCols[column].rules[idx] = &rule
 		}
 
 		rulesByCols[column].logicalOperator = logicalOperator

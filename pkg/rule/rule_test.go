@@ -9,14 +9,30 @@ func TestRuleFromStr(t *testing.T) {
 	tests := []struct {
 		name        string
 		inputParams string
-		expected    []IRule
+		expected    map[string]*ColRules
 	}{
 		{name: "no-rules", inputParams: "", expected: nil},
-		{name: "simple-rule-2-cols", inputParams: "col1:eq(5)||eq(23);col2:!eq(3)&&lt(10)", expected: []IRule{
-			&EqRule{Rule: Rule{column: "col1", strValue: "5", isValueNumber: true}},
-			&NotEqRule{Rule: Rule{column: "col2", strValue: "3", isValueNumber: true}},
-		}},
+		{name: "simple-rule-2-cols", inputParams: "col1:eq(5)||eq(23);col2:!eq(3)&&lt(10)",
+			expected: make(map[string]*ColRules, 2)}, {
+			"col1": &ColRules{
+				logicalOperator: "||",
+				column:          "col1",
+				Rules: []*Rule{
+					&Rule{value: "5", operator: "eq", floatValue: 5},
+					&Rule{value: "23", operator: "eq", floatValue: 23},
+				},
+			},
+			"col2": &ColRules{
+				logicalOperator: "&&",
+				column:          "col2",
+				Rules: []*Rule{
+					&Rule{value: "3", operator: "!eq", floatValue: 3},
+					&Rule{value: "10", operator: "lt", floatValue: 10},
+				},
+			},
+		},
 	}
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			rules, err := RulesFromStr(test.inputParams)
