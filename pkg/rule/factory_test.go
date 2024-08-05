@@ -19,7 +19,9 @@ func TestFactoryRuleFromStr(t *testing.T) {
 	}{
 		{name: "no-rules", inputParams: "", expectedColRules: nil, expectedError: nil},
 		{name: "invalid-rule-col-separator", inputParams: "col-eq(5)", expectedColRules: nil, expectedError: ErrInvalidRule},
-		{name: "invalid-rule-more-than-one-logical-operator", inputParams: "col:eq(5)||lte(10)&&eq(10)", expectedColRules: nil, expectedError: ErrInvalidRule},
+
+		{name: "invalid-rule-more-than-one-logical-operator", inputParams: "col:eq(5)||lte(10)&&eq(10)",
+			expectedColRules: nil, expectedError: ErrInvalidRule},
 
 		{name: "two-rules-2-cols", inputParams: "col1:eq(5)||eq(23);col2:!eq(3)&&lt(10)",
 			expectedColRules: map[string]*ColRules{
@@ -43,6 +45,7 @@ func TestFactoryRuleFromStr(t *testing.T) {
 				},
 			},
 		},
+
 		{name: "simple-rule-1-col", inputParams: "col1:eq(5)",
 			expectedColRules: map[string]*ColRules{
 				"col1": {
@@ -55,6 +58,7 @@ func TestFactoryRuleFromStr(t *testing.T) {
 				},
 			},
 		},
+
 		{name: "implict-and-logical-operator", inputParams: "col1:eq(5)lte(10)",
 			expectedColRules: map[string]*ColRules{
 				"col1": {
@@ -68,6 +72,7 @@ func TestFactoryRuleFromStr(t *testing.T) {
 				},
 			},
 		},
+
 		{name: "rule_with_strings", inputParams: "email:eq(test@email.com);",
 			expectedColRules: map[string]*ColRules{
 				"email": {
