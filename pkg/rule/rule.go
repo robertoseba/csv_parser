@@ -29,18 +29,18 @@ var ALL_RULES = []string{
 type Rule struct {
 	value      string
 	floatValue *float64
-	operator   allowedRules
+	ruleType   allowedRules
 }
 
 func (rule *Rule) IsValid(rowValue string) bool {
 	if rule.floatValue != nil {
 		rowValueFloat, err := strconv.ParseFloat(rowValue, 64)
 		if err == nil {
-			return compareValues(rowValueFloat, *rule.floatValue, rule.operator)
+			return compareValues(rowValueFloat, *rule.floatValue, rule.ruleType)
 		}
 
 	}
-	return compareValues(rowValue, rule.value, rule.operator)
+	return compareValues(rowValue, rule.value, rule.ruleType)
 }
 
 func compareValues[T constraints.Ordered](first, second T, operator allowedRules) bool {

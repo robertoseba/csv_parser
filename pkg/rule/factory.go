@@ -3,7 +3,6 @@ package rule
 import (
 	"errors"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -18,25 +17,26 @@ var ErrInvalidRule = errors.New("invalid rule format")
 /**
 * Returns a collection of rules grouped by column's name
 * Each column can have multiple rules and have a logical operator
-* that defines how the rules should be evaluated
+* that defines how the rules should be evaluated.
+* Also, based on the rules, the column can be marked as a number column.
  */
-func RulesFromStr(ruleStr string) (map[string]*ColRules, error) {
-	if strings.Trim(ruleStr, " ") == "" {
+func RulesFromStr(ruleInput string) ([]*ColRules, error) {
+	if strings.Trim(ruleInput, " ") == "" {
 		return nil, nil
 	}
 
-	colRules := strings.Split(ruleStr, RULE_SEPARATOR)
+	splittedRulesByCols := strings.Split(ruleInput, RULE_SEPARATOR)
 
-	rulesByCols := make(map[string]*ColRules, len(colRules))
+	rulesByCols := make([]*ColRules, 0, len(splittedRulesByCols))
 
 	regexRuleFormat := regexp.MustCompile(STR_RULE_FORMAT)
 
-	for _, strRule := range colRules {
-		if strings.Trim(strRule, " ") == "" {
+	for _, colStrRules := range splittedRulesByCols {
+		if strings.Trim(colStrRules, " ") == "" {
 			continue
 		}
 
-		column, rules, ok := strings.Cut(strRule, COL_RULE_SEPARATOR)
+		column, rules, ok := strings.Cut(colStrRules, COL_RULE_SEPARATOR)
 		if !ok {
 			return nil, ErrInvalidRule
 		}
@@ -44,44 +44,15 @@ func RulesFromStr(ruleStr string) (map[string]*ColRules, error) {
 			return nil, ErrInvalidRule
 		}
 
-		logicalOperator := AND_OPERATOR
-		splittedStringRules := regexRuleFormat.FindAllString(rules, -1)
+		strRules := regexRuleFormat.FindAllString(rules, -1)
 
-		rulesByCols[column] = &ColRules{
-			column: column,
-			rules:  make([]Rule, len(splittedStringRules)),
+		colRule := NewColRules(column, len(strRules))
+
+		for _, strRule := range strRules {
+			colRule.AddRule(strRule)
 		}
 
-		for idx, strRule := range splittedStringRules {
-			switch strRule[0:2] {
-			case "&&":
-				strRule = strRule[2:]
-			case "||":
-				logicalOperator = OR_OPERATOR
-				strRule = strRule[2:]
-			}
-
-			ruleOperator, ruleValue, _ := strings.Cut(strRule, "(")
-			ruleValue = strings.Trim(ruleValue, ")")
-
-			rule := Rule{
-				operator: allowedRules(ruleOperator),
-				value:    ruleValue,
-			}
-
-			ruleNumber, err := strconv.ParseFloat(ruleValue, 64)
-
-			if err == nil {
-				rulesByCols[column].isNumber = true
-				rule.floatValue = &ruleNumber
-			} else {
-				rulesByCols[column].isNumber = false
-			}
-
-			rulesByCols[column].rules[idx] = rule
-		}
-
-		rulesByCols[column].logicalOperator = logicalOperator
+		rulesByCols = append(rulesByCols, colRule)
 
 	}
 	return rulesByCols, nil
