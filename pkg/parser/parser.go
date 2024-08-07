@@ -42,7 +42,7 @@ func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 	headers := row.NewRow(headersArr, headersArr)
 
 	if config.ColRules != nil && !isColRulesValid(config.ColRules, headers) {
-		return nil, errors.New("validator has invalid column")
+		return nil, errors.New("rules have invalid column")
 	}
 
 	if !isFilterColsValid(config.ColFilters, headers) {

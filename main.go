@@ -12,7 +12,7 @@ func main() {
 	args := os.Args[1:]
 
 	if len(args) == 0 {
-		app.Run("./data.csv", "col1,col2,col3", "col2:eq(50);col3:gt(100)")
+		app.Run("./data.csv", "col1,col2,col3", "col1:eq(row_1000)||eq(row_11)")
 		return
 	}
 

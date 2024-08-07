@@ -28,22 +28,19 @@ func (r *ColRules) IsNumber() bool {
 }
 
 func (r *ColRules) IsValid(row *row.Row) bool {
-	result := true
-
 	for _, rule := range r.rules {
 		if rule.isValid(row.GetColumn(r.column)) {
 			if r.logicalOperator == OR_OPERATOR {
-				break
+				return true
 			}
 		} else {
 			if r.logicalOperator == AND_OPERATOR {
-				result = false
-				break
+				return false
 			}
 		}
 	}
 
-	return result
+	return r.logicalOperator == AND_OPERATOR
 }
 
 func newColRules(column string, initNumRules int) *ColRules {
