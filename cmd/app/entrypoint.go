@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -37,11 +38,11 @@ func Run(filePath string, colFilters string, rowRules string) {
 	for {
 		row, err := reader.ReadLine()
 
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 
-		if err == parser.ErrInvalidRow {
+		if errors.Is(err, parser.ErrInvalidRow) {
 			continue
 		}
 
