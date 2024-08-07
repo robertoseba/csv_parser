@@ -22,7 +22,6 @@ func Run(filePath string, colFilters string, rowRules string) {
 	}
 
 	csvConfig := &parser.CsvConfig{
-		Separator:  ',',
 		ColFilters: splitStringColFilters(colFilters),
 		ColRules:   rules,
 	}

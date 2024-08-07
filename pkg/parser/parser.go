@@ -11,7 +11,6 @@ import (
 )
 
 type CsvConfig struct {
-	Separator    rune
 	ParseNumbers bool
 	ColFilters   []string
 	ColRules     []*rule.ColRules
@@ -26,7 +25,6 @@ type CsvParser struct {
 func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 	if config == nil {
 		config = &CsvConfig{
-			Separator:  ',',
 			ColFilters: make([]string, 0),
 			ColRules:   nil,
 		}
@@ -57,14 +55,14 @@ func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 }
 
 func (r *CsvParser) ReadLine() (*row.Row, error) {
-	recordArr, e := r.reader.Read()
+	recordArr, err := r.reader.Read()
 
-	if e == io.EOF {
-		return nil, io.EOF
+	if errors.Is(err, io.EOF) {
+		return nil, err
 	}
 
-	if e != nil {
-		return nil, fmt.Errorf("unexpected error reading line: %w", e)
+	if err != nil {
+		return nil, fmt.Errorf("unexpected error reading line: %w", err)
 	}
 
 	row := row.NewRow(r.headers.Values(), recordArr)
