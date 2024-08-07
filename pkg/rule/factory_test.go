@@ -89,7 +89,7 @@ func TestFactoryRuleFromStr(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			rules, err := RulesFromStr(test.inputParams)
+			rules, err := NewFrom(test.inputParams)
 
 			if err != nil && test.expectedError == nil {
 				t.Errorf("Unexpected error: %v", err)

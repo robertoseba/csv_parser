@@ -31,7 +31,7 @@ func (r *ColRules) IsValid(row *row.Row) bool {
 	result := true
 
 	for _, rule := range r.rules {
-		if rule.IsValid(row.GetColumn(r.column)) {
+		if rule.isValid(row.GetColumn(r.column)) {
 			if r.logicalOperator == OR_OPERATOR {
 				break
 			}
@@ -46,7 +46,7 @@ func (r *ColRules) IsValid(row *row.Row) bool {
 	return result
 }
 
-func NewColRules(column string, initNumRules int) *ColRules {
+func newColRules(column string, initNumRules int) *ColRules {
 	rules := make([]Rule, 0, initNumRules)
 
 	return &ColRules{
@@ -57,7 +57,7 @@ func NewColRules(column string, initNumRules int) *ColRules {
 	}
 }
 
-func (r *ColRules) AddRule(strRule string) {
+func (r *ColRules) addRule(strRule string) {
 	switch strRule[0:2] {
 	case "&&":
 		strRule = strRule[2:]

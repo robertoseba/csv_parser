@@ -32,7 +32,7 @@ type Rule struct {
 	ruleType   allowedRules
 }
 
-func (rule *Rule) IsValid(rowValue string) bool {
+func (rule *Rule) isValid(rowValue string) bool {
 	if rule.floatValue != nil {
 		rowValueFloat, err := strconv.ParseFloat(rowValue, 64)
 		if err == nil {

@@ -225,7 +225,7 @@ func TestLessThanOrEqual(t *testing.T) {
 
 func runTest(test testTable, t *testing.T) {
 	t.Run(test.testName, func(t *testing.T) {
-		if r := test.rule.IsValid(test.inputParam); r != test.expected {
+		if r := test.rule.isValid(test.inputParam); r != test.expected {
 			t.Errorf("Expected %v but got %v", test.expected, r)
 		}
 	})

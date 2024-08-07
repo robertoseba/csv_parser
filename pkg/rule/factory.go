@@ -20,7 +20,7 @@ var ErrInvalidRule = errors.New("invalid rule format")
 * that defines how the rules should be evaluated.
 * Also, based on the rules, the column can be marked as a number column.
  */
-func RulesFromStr(ruleInput string) ([]*ColRules, error) {
+func NewFrom(ruleInput string) ([]*ColRules, error) {
 	if strings.Trim(ruleInput, " ") == "" {
 		return nil, nil
 	}
@@ -46,10 +46,10 @@ func RulesFromStr(ruleInput string) ([]*ColRules, error) {
 
 		strRules := regexRuleFormat.FindAllString(rules, -1)
 
-		colRule := NewColRules(column, len(strRules))
+		colRule := newColRules(column, len(strRules))
 
 		for _, strRule := range strRules {
-			colRule.AddRule(strRule)
+			colRule.addRule(strRule)
 		}
 
 		rulesByCols = append(rulesByCols, colRule)
