@@ -14,7 +14,7 @@ type CsvConfig struct {
 	Separator    rune
 	ParseNumbers bool
 	ColFilters   []string
-	Validator    *rule.Validator
+	ColRules     []*rule.ColRules
 }
 
 type CsvParser struct {
@@ -26,10 +26,9 @@ type CsvParser struct {
 func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 	if config == nil {
 		config = &CsvConfig{
-			Separator:    ',',
-			ParseNumbers: false, // TODO: Should implement number parsing?
-			ColFilters:   make([]string, 0),
-			Validator:    nil,
+			Separator:  ',',
+			ColFilters: make([]string, 0),
+			ColRules:   nil,
 		}
 	}
 
@@ -42,11 +41,11 @@ func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 
 	headers := row.NewRow(headersArr, headersArr)
 
-	if config.Validator != nil && !hasValidColumns(config.Validator.Columns(), headers) {
+	if config.ColRules != nil && !isColRulesValid(config.ColRules, headers) {
 		return nil, errors.New("validator has invalid column")
 	}
 
-	if !hasValidColumns(config.ColFilters, headers) {
+	if !isFilterColsValid(config.ColFilters, headers) {
 		return nil, errors.New("filter for columns has invalid column")
 	}
 
@@ -70,8 +69,16 @@ func (r *CsvParser) ReadLine() (*row.Row, error) {
 
 	row := row.NewRow(r.headers.Values(), recordArr)
 
-	if r.config.Validator == nil || r.config.Validator.IsValid(row) {
+	if r.config.ColRules == nil {
 		return row.Only(r.config.ColFilters), nil
+	}
+
+	//TODO: How do colRules interact between them? If one is valid, should we return the row?
+	// Should we define the logical operator for interaction between columns? EX: (OR)col1:eq(5)ANDlte(10);col2:gte(10)
+	for _, colRule := range r.config.ColRules {
+		if colRule.IsValid(row) {
+			return row.Only(r.config.ColFilters), nil
+		}
 	}
 
 	return nil, ErrInvalidRow
@@ -81,7 +88,16 @@ func (r *CsvParser) Headers() *row.Row {
 	return r.headers.Only(r.config.ColFilters)
 }
 
-func hasValidColumns(cols []string, headers *row.Row) bool {
+func isColRulesValid(colRules []*rule.ColRules, headers *row.Row) bool {
+	for _, colRule := range colRules {
+		if !headers.HasColumn(colRule.Column()) {
+			return false
+		}
+	}
+	return true
+}
+
+func isFilterColsValid(cols []string, headers *row.Row) bool {
 	for _, col := range cols {
 		if !headers.HasColumn(col) {
 			return false
