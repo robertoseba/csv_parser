@@ -11,9 +11,8 @@ import (
 )
 
 type CsvConfig struct {
-	ParseNumbers bool
-	ColFilters   []string
-	ColRules     []*rule.ColRules
+	ColFilters []string
+	ColRules   []*rule.ColRules
 }
 
 type CsvParser struct {
