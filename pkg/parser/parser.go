@@ -10,6 +10,8 @@ import (
 	"github.com/robertoseba/csv_parser/pkg/rule"
 )
 
+var ErrInvalidRow = errors.New("invalid row")
+
 type CsvConfig struct {
 	ColFilters []string
 	ColRules   []*rule.ColRules
