@@ -71,14 +71,14 @@ func (r *CsvParser) ReadLine() (*row.Row, error) {
 	}
 
 	//TODO: How do colRules interact between them? If one is valid, should we return the row?
-	// Should we define the logical operator for interaction between columns? EX: (OR)col1:eq(5)ANDlte(10);col2:gte(10)
+	// Should we define the logical operator for interaction between columns? EX: (OR)col1:eq(5)||lte(10);col2:gte(10)
 	for _, colRule := range r.config.ColRules {
-		if colRule.IsValid(row) {
-			return row.Only(r.config.ColFilters), nil
+		if !colRule.IsValid(row) {
+			return nil, ErrInvalidRow
 		}
 	}
 
-	return nil, ErrInvalidRow
+	return row.Only(r.config.ColFilters), nil
 }
 
 func (r *CsvParser) Headers() *row.Row {

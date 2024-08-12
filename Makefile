@@ -6,7 +6,7 @@ default:
 	@echo "make run"
 
 tests:
-	go test -v ./..
+	go test  ./... 
 
 build:
 	go build -o ./build/ ./..
