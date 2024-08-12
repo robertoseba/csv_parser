@@ -1,32 +1,22 @@
 package parser
 
 import (
-	"encoding/csv"
 	"errors"
 	"io"
 	"slices"
 	"strings"
 	"testing"
 
-	"github.com/robertoseba/csv_parser/pkg/row"
 	"github.com/robertoseba/csv_parser/pkg/rule"
 )
 
 func TestParserHeaders(t *testing.T) {
-	colRules, _ := rule.NewFrom("col1:eq(row_1000)||eq(row_11)")
 
-	config := &CsvConfig{
-		ColFilters: []string{"col1", "col2"},
-		ColRules:   colRules,
-	}
+	config := &CsvConfig{}
 
 	testReader := strings.NewReader("col1,col2,col3\nrow_1000,2,3\nrow_11,5,6\nrow_99,8,9")
 
-	expected := &CsvParser{
-		config:  config,
-		reader:  csv.NewReader(testReader),
-		headers: row.NewRow([]string{"col1", "col2", "col3"}, []string{"col1", "col2", "col3"}),
-	}
+	expected := []string{"col1", "col2", "col3"}
 
 	results, err := NewParser(testReader, config)
 
@@ -34,8 +24,8 @@ func TestParserHeaders(t *testing.T) {
 		t.Errorf("Failted creating parser: %v", err)
 	}
 
-	if !slices.Equal(results.Headers().Values(), expected.Headers().Values()) {
-		t.Errorf("Expected %v, got %v", expected.Headers(), results.Headers())
+	if !slices.Equal(results.Headers().Values(), expected) {
+		t.Errorf("Expected %v, got %v", expected, results.Headers().Values())
 	}
 }
 
@@ -59,7 +49,7 @@ func TestParserColFilters(t *testing.T) {
 			err:         nil,
 		},
 		{
-			name: "ColFilters not present in headers",
+			name: "Error when ColFilters not present in column headers",
 			inputConfig: &CsvConfig{
 				ColFilters: []string{"col4", "col5"},
 			},
@@ -100,22 +90,22 @@ func TestParserReadLine(t *testing.T) {
 		errs        []error
 	}{
 		{
-			name:        "readlines with col1 and col2 filters",
-			inputConfig: &CsvConfig{ColFilters: []string{"col1", "col2"}},
-			expected: [][]string{
-				{"row_1000", "2"},
-				{"row_11", "5"},
-				{"row_99", "8"},
-			},
-			errs: nil,
-		},
-		{
 			name:        "reads all lines with no filter nor rules",
 			inputConfig: &CsvConfig{},
 			expected: [][]string{
 				{"row_1000", "2", "3"},
 				{"row_11", "5", "6"},
 				{"row_99", "8", "9"},
+			},
+			errs: nil,
+		},
+		{
+			name:        "readlines with col1 and col2 filters",
+			inputConfig: &CsvConfig{ColFilters: []string{"col1", "col2"}},
+			expected: [][]string{
+				{"row_1000", "2"},
+				{"row_11", "5"},
+				{"row_99", "8"},
 			},
 			errs: nil,
 		},
