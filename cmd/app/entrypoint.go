@@ -49,7 +49,7 @@ func Run(ioReader io.Reader, colFilters string, rowRules string) {
 			fmt.Fprintf(os.Stderr, "Unexpected error reading line: %s\n", err)
 			os.Exit(1)
 		}
-		printer.PrintRow(row.LineNumber(), row.Values())
+		printer.PrintRow(row.Values())
 	}
 }
 
