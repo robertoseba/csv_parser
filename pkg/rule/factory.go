@@ -9,7 +9,7 @@ import (
 const RULE_SEPARATOR = ";"
 const COL_RULE_SEPARATOR = ":"
 
-// Rule formats examples: eq(5) or !eq(3) or ||eq(5) or &&eq(5)
+// Rule formats examples: eq(5) or neq(3) or ||eq(5) or &&eq(5)
 var STR_RULE_FORMAT = `\s*(\|\||&&)?(` + strings.Join(ALL_RULES, "|") + `)\s*\((\w+)\)\s*`
 
 var ErrInvalidRule = errors.New("invalid rule format")

@@ -14,7 +14,7 @@ const (
 	LT_RULE  allowedRules = "lt"
 	GTE_RULE allowedRules = "gte"
 	LTE_RULE allowedRules = "lte"
-	NE_RULE  allowedRules = "!eq"
+	NE_RULE  allowedRules = "neq"
 )
 
 var ALL_RULES = []string{
