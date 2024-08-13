@@ -14,7 +14,7 @@ func main() {
 	var colRulesFlag = flag.String("rules", "", "Apply rules to the specified columns. Ex: -rules \"col1:eq(100)\"")
 	flag.Parse()
 
-	var input io.Reader
+	var ioReader io.Reader
 
 	if filename := flag.Arg(0); filename != "" {
 		f, err := os.Open(filename)
@@ -24,7 +24,7 @@ func main() {
 		}
 		defer f.Close()
 
-		input = f
+		ioReader = f
 	} else {
 		fi, err := os.Stdin.Stat()
 		if err != nil {
@@ -35,9 +35,9 @@ func main() {
 			fmt.Println("No files or pipes provided")
 			os.Exit(0)
 		}
-		input = os.Stdin
+		ioReader = os.Stdin
 	}
 
-	app.Run(input, *colFilterFlag, *colRulesFlag)
+	app.Run(ioReader, *colFilterFlag, *colRulesFlag)
 
 }
