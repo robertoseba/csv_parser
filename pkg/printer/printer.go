@@ -19,28 +19,31 @@ type Printer struct {
 
 func NewPrinter() *Printer {
 	re := lipgloss.NewRenderer(os.Stdout)
-	baseStyle := re.NewStyle().Padding(0, 3).
-		TabWidth(4).
-		BorderForeground(lipgloss.Color("63"))
+	baseStyle := re.NewStyle().Padding(0, 3).TabWidth(4)
 
 	return &Printer{
 		onScreen:    term.IsTerminal(int(os.Stdout.Fd())),
 		separator:   "\t",
-		maxColWidth: 10,
+		maxColWidth: 0,
 		lineNumber:  0,
 		style:       baseStyle,
 	}
 }
 
 func (p *Printer) PrintHeader(headers []string) {
+	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
+	cellWidth := physicalWidth / len(headers)
+	p.style = p.style.MaxWidth(cellWidth)
+	p.maxColWidth = cellWidth
+
 	if !p.onScreen {
 		fmt.Printf("%s\n", strings.Join(headers, ","))
 		return
 	}
 	style := p.style.
 		Foreground(lipgloss.Color("#000000")).
-		Background(lipgloss.Color("#D7FF87")).
-		MaxWidth(p.maxColWidth)
+		Background(lipgloss.Color("#D7FF87"))
+
 	for _, header := range headers {
 		fmt.Print(style.Render(resizeCell(header, p.maxColWidth)))
 	}
@@ -55,8 +58,7 @@ func (p *Printer) PrintRow(rows []string) {
 	}
 
 	style := p.style.
-		Foreground(lipgloss.Color("#D7FF87")).
-		MaxWidth(p.maxColWidth)
+		Foreground(lipgloss.Color("#D7FF87"))
 
 	for _, row := range rows {
 		fmt.Print(style.Faint(p.lineNumber%2 == 0).Render(resizeCell(row, p.maxColWidth)))
