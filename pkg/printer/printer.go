@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/term"
 )
 
@@ -13,15 +14,21 @@ type Printer struct {
 	separator   string
 	maxColWidth int
 	lineNumber  int
+	style       lipgloss.Style
 }
 
 func NewPrinter() *Printer {
+	re := lipgloss.NewRenderer(os.Stdout)
+	baseStyle := re.NewStyle().Padding(0, 3).
+		TabWidth(4).
+		BorderForeground(lipgloss.Color("63"))
 
 	return &Printer{
 		onScreen:    term.IsTerminal(int(os.Stdout.Fd())),
 		separator:   "\t",
-		maxColWidth: 30,
+		maxColWidth: 10,
 		lineNumber:  0,
+		style:       baseStyle,
 	}
 }
 
@@ -30,23 +37,37 @@ func (p *Printer) PrintHeader(headers []string) {
 		fmt.Printf("%s\n", strings.Join(headers, ","))
 		return
 	}
-
-	fmt.Printf("\x1b[1;30;43m%s%s\x1b[0;m\n", p.separator, strings.Join(headers, p.separator))
+	style := p.style.
+		Foreground(lipgloss.Color("#000000")).
+		Background(lipgloss.Color("#D7FF87")).
+		MaxWidth(p.maxColWidth)
+	for _, header := range headers {
+		fmt.Print(style.Render(resizeCell(header, p.maxColWidth)))
+	}
+	fmt.Println()
 	p.lineNumber++
 }
 
-func (p *Printer) PrintRow(row []string) {
+func (p *Printer) PrintRow(rows []string) {
 	if !p.onScreen {
-		fmt.Printf("%s\n", strings.Join(row, ","))
+		fmt.Printf("%s\n", strings.Join(rows, ","))
 		return
 	}
-	if p.lineNumber%2 == 0 {
-		fmt.Printf("\x1b[1;33m%d%s%s\x1b[0;m\n", p.lineNumber, p.separator, strings.Join(row, p.separator))
 
-	} else {
-		fmt.Printf("\x1b[2;33m%d%s%s\x1b[0;m\n", p.lineNumber, p.separator, strings.Join(row, p.separator))
+	style := p.style.
+		Foreground(lipgloss.Color("#D7FF87")).
+		MaxWidth(p.maxColWidth)
 
+	for _, row := range rows {
+		fmt.Print(style.Faint(p.lineNumber%2 == 0).Render(resizeCell(row, p.maxColWidth)))
 	}
-
+	fmt.Println()
 	p.lineNumber++
+}
+
+func resizeCell(cell string, maxWidth int) string {
+	if len(cell) > maxWidth {
+		return cell[:maxWidth]
+	}
+	return cell + strings.Repeat(" ", maxWidth-len(cell))
 }
