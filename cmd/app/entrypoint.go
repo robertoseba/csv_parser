@@ -11,10 +11,7 @@ import (
 	"github.com/robertoseba/csv_parser/pkg/rule"
 )
 
-func Run(filePath string, colFilters string, rowRules string) {
-	file := openFile(filePath)
-	defer file.Close()
-
+func Run(input io.Reader, colFilters string, rowRules string) {
 	rules, err := rule.NewFrom(rowRules)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error parsing rules: %s\n", err)
@@ -26,7 +23,7 @@ func Run(filePath string, colFilters string, rowRules string) {
 		ColRules:   rules,
 	}
 
-	reader, err := parser.NewParser(file, csvConfig)
+	reader, err := parser.NewParser(input, csvConfig)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error generating csv: %s\n", err)
 		os.Exit(1)
@@ -59,13 +56,4 @@ func splitStringColFilters(colFilters string) []string {
 		return nil
 	}
 	return strings.Split(colFilters, ",")
-}
-
-func openFile(filePath string) *os.File {
-	file, err := os.Open(filePath)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to open file: %s\n", filePath)
-		os.Exit(1)
-	}
-	return file
 }
