@@ -69,9 +69,9 @@ func (r *CsvParser) ReadLine() (*row.Row, error) {
 	}
 
 	row := row.NewRow(r.currentLine, r.headers.Values(), recordArr)
-	r.currentLine++
 
 	if r.config.ColRules == nil {
+		r.currentLine++
 		return row.Only(r.config.ColFilters), nil
 	}
 
@@ -79,11 +79,11 @@ func (r *CsvParser) ReadLine() (*row.Row, error) {
 	// Should we define the logical operator for interaction between columns? EX: (OR)col1:eq(5)||lte(10);col2:gte(10)
 	for _, colRule := range r.config.ColRules {
 		if !colRule.IsValid(row) {
-			r.currentLine--
 			return nil, ErrInvalidRow
 		}
 	}
 
+	r.currentLine++
 	return row.Only(r.config.ColFilters), nil
 }
 
