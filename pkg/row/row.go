@@ -5,14 +5,16 @@ import (
 )
 
 type Row struct {
-	data    map[string]string
-	headers []string
+	rowNumber int
+	data      map[string]string
+	headers   []string
 }
 
-func NewRow(headers []string, record []string) *Row {
+func NewRow(rowNumber int, headers []string, record []string) *Row {
 	row := &Row{
-		data:    make(map[string]string),
-		headers: headers,
+		rowNumber: rowNumber,
+		data:      make(map[string]string),
+		headers:   headers,
 	}
 
 	for i, header := range headers {
@@ -23,7 +25,7 @@ func NewRow(headers []string, record []string) *Row {
 }
 
 func (r *Row) String() string {
-	return strings.Join(r.Values(), ",")
+	return strings.Join(r.Values(), "\t")
 }
 
 func (r *Row) Values() []string {
@@ -34,6 +36,10 @@ func (r *Row) Values() []string {
 	}
 
 	return values
+}
+
+func (r *Row) LineNumber() int {
+	return r.rowNumber
 }
 
 func (r *Row) Only(keys []string) *Row {
@@ -47,7 +53,7 @@ func (r *Row) Only(keys []string) *Row {
 		newFilteredRowData[idx] = r.data[key]
 	}
 
-	return NewRow(keys, newFilteredRowData)
+	return NewRow(r.rowNumber, keys, newFilteredRowData)
 }
 
 func (r *Row) HasColumn(key string) bool {

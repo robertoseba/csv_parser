@@ -18,9 +18,10 @@ type CsvConfig struct {
 }
 
 type CsvParser struct {
-	config  *CsvConfig
-	headers *row.Row
-	reader  *csv.Reader
+	currentLine int
+	config      *CsvConfig
+	headers     *row.Row
+	reader      *csv.Reader
 }
 
 func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
@@ -38,7 +39,7 @@ func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 		return nil, fmt.Errorf("error parsing headers: %w", err)
 	}
 
-	headers := row.NewRow(headersArr, headersArr)
+	headers := row.NewRow(0, headersArr, headersArr)
 
 	if config.ColRules != nil && !isColRulesValid(config.ColRules, headers) {
 		return nil, errors.New("rules have invalid column")
@@ -49,9 +50,10 @@ func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 	}
 
 	return &CsvParser{
-		config:  config,
-		reader:  csvReader,
-		headers: headers,
+		currentLine: 1,
+		config:      config,
+		reader:      csvReader,
+		headers:     headers,
 	}, nil
 }
 
@@ -66,7 +68,8 @@ func (r *CsvParser) ReadLine() (*row.Row, error) {
 		return nil, fmt.Errorf("unexpected error reading line: %w", err)
 	}
 
-	row := row.NewRow(r.headers.Values(), recordArr)
+	row := row.NewRow(r.currentLine, r.headers.Values(), recordArr)
+	r.currentLine++
 
 	if r.config.ColRules == nil {
 		return row.Only(r.config.ColFilters), nil
@@ -76,6 +79,7 @@ func (r *CsvParser) ReadLine() (*row.Row, error) {
 	// Should we define the logical operator for interaction between columns? EX: (OR)col1:eq(5)||lte(10);col2:gte(10)
 	for _, colRule := range r.config.ColRules {
 		if !colRule.IsValid(row) {
+			r.currentLine--
 			return nil, ErrInvalidRow
 		}
 	}

@@ -29,7 +29,7 @@ func Run(input io.Reader, colFilters string, rowRules string) {
 		os.Exit(1)
 	}
 
-	fmt.Println(reader.Headers())
+	fmt.Printf(" \t%s\n", reader.Headers())
 
 	for {
 		row, err := reader.ReadLine()
@@ -47,7 +47,7 @@ func Run(input io.Reader, colFilters string, rowRules string) {
 			os.Exit(1)
 		}
 
-		fmt.Println(row)
+		fmt.Printf("%d\t%s\n", row.LineNumber(), row)
 	}
 }
 
@@ -55,5 +55,11 @@ func splitStringColFilters(colFilters string) []string {
 	if strings.Trim(colFilters, " ") == "" {
 		return nil
 	}
-	return strings.Split(colFilters, ",")
+
+	filters := strings.Split(colFilters, ",")
+	for i, filter := range filters {
+		filters[i] = strings.Trim(filter, " ")
+	}
+
+	return filters
 }
