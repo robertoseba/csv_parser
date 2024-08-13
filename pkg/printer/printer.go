@@ -31,15 +31,16 @@ func NewPrinter() *Printer {
 }
 
 func (p *Printer) PrintHeader(headers []string) {
-	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
-	cellWidth := physicalWidth / len(headers)
-	p.style = p.style.MaxWidth(cellWidth)
-	p.maxColWidth = cellWidth
-
 	if !p.onScreen {
 		fmt.Printf("%s\n", strings.Join(headers, ","))
 		return
 	}
+
+	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
+	cellWidth := physicalWidth / len(headers)
+	p.style = p.style.MaxWidth(cellWidth)
+
+	p.maxColWidth = cellWidth
 	style := p.style.
 		Foreground(lipgloss.Color("#000000")).
 		Background(lipgloss.Color("#D7FF87"))
