@@ -2,6 +2,7 @@ package rule
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -24,6 +25,7 @@ func NewFrom(ruleInput string) ([]*ColRules, error) {
 	if strings.Trim(ruleInput, " ") == "" {
 		return nil, nil
 	}
+	parseRules(ruleInput)
 
 	splittedRulesByCols := strings.Split(ruleInput, RULE_SEPARATOR)
 
@@ -56,4 +58,67 @@ func NewFrom(ruleInput string) ([]*ColRules, error) {
 
 	}
 	return rulesByCols, nil
+}
+
+func parseRules(rulesInput string) ([]ColRules, error) {
+	if strings.Trim(rulesInput, " ") == "" {
+		return nil, nil
+	}
+	col := ""
+	ruleValue := ""
+	// logicalOperator := AND_OPERATOR
+	var ruleType allowedRules
+
+	fmt.Println("input: ", rulesInput)
+	for {
+		//Parses end of the each rule
+		ruleEndPos := strings.Index(rulesInput, RULE_SEPARATOR)
+		if ruleEndPos == -1 {
+			ruleEndPos = len(rulesInput)
+
+		}
+
+		colRulesString := rulesInput[:ruleEndPos]
+		fmt.Printf("rule string: %s\n", colRulesString)
+
+		//Parses column
+		colEndPos := strings.Index(colRulesString, COL_RULE_SEPARATOR)
+		if colEndPos == -1 {
+			return nil, ErrInvalidRule
+		}
+		col = colRulesString[:colEndPos]
+		fmt.Println("col: ", col)
+
+		colRulesString = colRulesString[colEndPos+1:]
+		for {
+			ruleTypeEndPos := strings.Index(colRulesString, "(")
+			if ruleTypeEndPos == -1 {
+				return nil, ErrInvalidRule
+			}
+			ruleType = allowedRules(colRulesString[:ruleTypeEndPos])
+			//TODO: validate ruleType
+			fmt.Println("type:", ruleType)
+
+			colRulesString = colRulesString[ruleTypeEndPos+1:]
+
+			// retrieve value for rule
+			valueEndPos := strings.Index(colRulesString, ")")
+			if valueEndPos == -1 {
+				return nil, ErrInvalidRule
+			}
+			ruleValue = colRulesString[:valueEndPos]
+			fmt.Println("value", ruleValue)
+
+			if valueEndPos+1 >= len(colRulesString) {
+				break
+			}
+			colRulesString = colRulesString[valueEndPos+1:]
+		}
+
+		if ruleEndPos+1 >= len(rulesInput) {
+			break
+		}
+		rulesInput = rulesInput[ruleEndPos+1:]
+	}
+	return nil, nil
 }
