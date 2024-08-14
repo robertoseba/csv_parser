@@ -15,10 +15,10 @@ var STR_RULE_FORMAT = `\s*(\|\||&&)?(` + strings.Join(ALL_RULES, "|") + `)\s*\((
 var ErrInvalidRule = errors.New("invalid rule format")
 
 /**
-* Returns a collection of rules grouped by column's name
+* Returns a slice of items with grouped rules by their columns.
 * Each column can have multiple rules and have a logical operator
 * that defines how the rules should be evaluated.
-* Also, based on the rules, the column can be marked as a number column.
+* Also, based on the rule value, the column can be set to be a number type.
  */
 func NewFrom(ruleInput string) ([]*ColRules, error) {
 	if strings.Trim(ruleInput, " ") == "" {
