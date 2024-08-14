@@ -6,13 +6,11 @@ default:
 	@echo "make run"
 
 tests:
-	go test -v ./..
+	go test  ./... 
 
 build:
-	go build -o ./build/ ./..
+	go build -o ./build/	
 
 run:
-	go run ./..
+	go run . 
 
-generate-test-csv:
-	go run . --generate-csv 3 100

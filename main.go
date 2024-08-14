@@ -1,38 +1,43 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"io"
 	"os"
-	"strconv"
 
-	"github.com/robertoseba/csv_parser/pkg/app"
+	"github.com/robertoseba/csv_parser/cmd/app"
 )
 
 func main() {
-	args := os.Args[1:]
+	var colFilterFlag = flag.String("filter", "", "Filter the CSV file by the specified columns")
+	var colRulesFlag = flag.String("rules", "", "Apply rules to the specified columns. Ex: -rules \"col1:eq(100)\"")
+	flag.Parse()
 
-	if len(args) == 0 {
-		app.Run("./data.csv", "col1,col2,col3", "col2>=400")
-		return
-	}
+	var ioReader io.Reader
 
-	if args[0] == "--generate-csv" {
-		fmt.Printf("Generating CSV file for %s columns and %s rows...\n", args[1], args[2])
-
-		rowCount, err := strconv.Atoi(args[2])
+	if filename := flag.Arg(0); filename != "" {
+		f, err := os.Open(filename)
 		if err != nil {
-			fmt.Println("Invalid row count")
+			fmt.Println("error opening file: err:", err)
+			os.Exit(1)
+		}
+		defer f.Close()
+
+		ioReader = f
+	} else {
+		fi, err := os.Stdin.Stat()
+		if err != nil {
 			panic(err)
 		}
 
-		columnCount, err := strconv.Atoi(args[1])
-		if err != nil {
-			fmt.Println("Invalid column count")
-			panic(err)
+		if fi.Mode()&os.ModeNamedPipe == 0 {
+			fmt.Println("No files or pipes provided")
+			os.Exit(0)
 		}
-
-		generateCSV("./data.csv", columnCount, rowCount)
-
-		fmt.Println("CSV file generated successfully")
+		ioReader = os.Stdin
 	}
+
+	app.Run(ioReader, *colFilterFlag, *colRulesFlag)
+
 }

@@ -5,28 +5,30 @@ import (
 	"errors"
 	"fmt"
 	"io"
+
+	"github.com/robertoseba/csv_parser/pkg/row"
+	"github.com/robertoseba/csv_parser/pkg/rule"
 )
 
+var ErrInvalidRow = errors.New("invalid row")
+
 type CsvConfig struct {
-	Separator    rune
-	ParseNumbers bool
-	ColFilters   []string
-	Validator    *Validator
+	ColFilters []string
+	ColRules   []*rule.ColRules
 }
 
 type CsvParser struct {
-	config  *CsvConfig
-	headers *Row
-	reader  *csv.Reader
+	currentLine int
+	config      *CsvConfig
+	headers     *row.Row
+	reader      *csv.Reader
 }
 
 func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 	if config == nil {
 		config = &CsvConfig{
-			Separator:    ',',
-			ParseNumbers: false, // TODO: Should implement number parsing?
-			ColFilters:   make([]string, 0),
-			Validator:    nil,
+			ColFilters: make([]string, 0),
+			ColRules:   nil,
 		}
 	}
 
@@ -37,48 +39,68 @@ func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 		return nil, fmt.Errorf("error parsing headers: %w", err)
 	}
 
-	headers := NewRow(headersArr, headersArr)
+	headers := row.NewRow(0, headersArr, headersArr)
 
-	if config.Validator != nil && !hasValidColumns(config.Validator.Columns(), headers) {
-		return nil, errors.New("validator has invalid column")
+	if config.ColRules != nil && !isColRulesValid(config.ColRules, headers) {
+		return nil, errors.New("rules have invalid column")
 	}
 
-	if !hasValidColumns(config.ColFilters, headers) {
+	if !isFilterColsValid(config.ColFilters, headers) {
 		return nil, errors.New("filter for columns has invalid column")
 	}
 
 	return &CsvParser{
-		config:  config,
-		reader:  csvReader,
-		headers: headers,
+		currentLine: 1,
+		config:      config,
+		reader:      csvReader,
+		headers:     headers,
 	}, nil
 }
 
-func (r *CsvParser) ReadLine() (*Row, error) {
-	recordArr, e := r.reader.Read()
+func (r *CsvParser) ReadLine() (*row.Row, error) {
+	recordArr, err := r.reader.Read()
 
-	if e == io.EOF {
-		return nil, io.EOF
+	if errors.Is(err, io.EOF) {
+		return nil, err
 	}
 
-	if e != nil {
-		return nil, fmt.Errorf("unexpected error reading line: %w", e)
+	if err != nil {
+		return nil, fmt.Errorf("unexpected error reading line: %w", err)
 	}
 
-	row := NewRow(r.headers.Values(), recordArr)
+	row := row.NewRow(r.currentLine, r.headers.Values(), recordArr)
 
-	if r.config.Validator == nil || r.config.Validator.IsValid(row) {
+	if r.config.ColRules == nil {
+		r.currentLine++
 		return row.Only(r.config.ColFilters), nil
 	}
 
-	return nil, ErrInvalidRow
+	//TODO: How do colRules interact between them? If one is valid, should we return the row?
+	// Should we define the logical operator for interaction between columns? EX: (OR)col1:eq(5)||lte(10);col2:gte(10)
+	for _, colRule := range r.config.ColRules {
+		if !colRule.IsValid(row) {
+			return nil, ErrInvalidRow
+		}
+	}
+
+	r.currentLine++
+	return row.Only(r.config.ColFilters), nil
 }
 
-func (r *CsvParser) Headers() *Row {
+func (r *CsvParser) Headers() *row.Row {
 	return r.headers.Only(r.config.ColFilters)
 }
 
-func hasValidColumns(cols []string, headers *Row) bool {
+func isColRulesValid(colRules []*rule.ColRules, headers *row.Row) bool {
+	for _, colRule := range colRules {
+		if !headers.HasColumn(colRule.Column()) {
+			return false
+		}
+	}
+	return true
+}
+
+func isFilterColsValid(cols []string, headers *row.Row) bool {
 	for _, col := range cols {
 		if !headers.HasColumn(col) {
 			return false
