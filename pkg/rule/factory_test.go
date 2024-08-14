@@ -19,6 +19,7 @@ func TestFactoryRuleFromStr(t *testing.T) {
 	}{
 		{name: "no-rules", inputParams: "", expectedColRules: nil, expectedError: nil},
 		{name: "invalid-rule-col-separator", inputParams: "col-eq(5)", expectedColRules: nil, expectedError: ErrInvalidRule},
+		{name: "invalid-rule-no-parenthesis", inputParams: "col:eq[5]", expectedColRules: nil, expectedError: ErrInvalidRule},
 
 		{name: "invalid-rule-more-than-one-logical-operator", inputParams: "col:eq(5)||lte(10)&&eq(10)",
 			expectedColRules: nil, expectedError: ErrInvalidRule},
