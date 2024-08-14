@@ -62,6 +62,26 @@ func TestFactoryRuleFromStr(t *testing.T) {
 				},
 			},
 		},
+		{name: "repeated-col", inputParams: "col1:eq(5);col1:lte(10)",
+			expectedColRules: []*ColRules{
+				{
+					logicalOperator: "&&",
+					column:          "col1",
+					isNumber:        true,
+					rules: []Rule{
+						{value: "5", ruleType: EQ_RULE, floatValue: &expectedFloat1},
+					},
+				},
+				{
+					logicalOperator: "&&",
+					column:          "col1",
+					isNumber:        true,
+					rules: []Rule{
+						{value: "10", ruleType: LTE_RULE, floatValue: &expectedFloat4},
+					},
+				},
+			},
+		},
 
 		{name: "implict-and-logical-operator", inputParams: "col1:eq(5)lte(10)",
 			expectedColRules: []*ColRules{

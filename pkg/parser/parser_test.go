@@ -97,7 +97,11 @@ func TestParserReadLine(t *testing.T) {
 				{"row_11", "5", "6"},
 				{"row_99", "8", "9"},
 			},
-			errs: nil,
+			errs: []error{
+				nil,
+				nil,
+				nil,
+			},
 		},
 		{
 			name:        "readlines with col1 and col2 filters",
@@ -107,7 +111,11 @@ func TestParserReadLine(t *testing.T) {
 				{"row_11", "5"},
 				{"row_99", "8"},
 			},
-			errs: nil,
+			errs: []error{
+				nil,
+				nil,
+				nil,
+			},
 		},
 		{
 			name: "returns error when line fails rules, returning only valid rows",
@@ -122,6 +130,7 @@ func TestParserReadLine(t *testing.T) {
 			errs: []error{
 				ErrInvalidRow,
 				ErrInvalidRow,
+				nil,
 			},
 		},
 	}
@@ -146,10 +155,8 @@ func TestParserReadLine(t *testing.T) {
 					break
 				}
 
-				if err != nil {
-					if !errors.Is(err, test.errs[i]) {
-						t.Errorf("Expected %v, got %v", test.errs[i], err)
-					}
+				if !errors.Is(err, test.errs[i]) {
+					t.Errorf("Expected %v, got %v", test.errs[i], err)
 				}
 
 				if row != nil && !slices.Equal(row.Values(), test.expected[i]) {
