@@ -66,7 +66,7 @@ func parseRules(rulesInput string) ([]ColRules, error) {
 	}
 	col := ""
 	ruleValue := ""
-	// logicalOperator := AND_OPERATOR
+	logicalOperator := AND_OPERATOR
 	var ruleType allowedRules
 
 	fmt.Println("input: ", rulesInput)
@@ -96,7 +96,20 @@ func parseRules(rulesInput string) ([]ColRules, error) {
 				return nil, ErrInvalidRule
 			}
 			ruleType = allowedRules(colRulesString[:ruleTypeEndPos])
-			//TODO: validate ruleType
+			if string(ruleType[:len(AND_OPERATOR)]) == string(AND_OPERATOR) ||
+				string(ruleType[0:len(OR_OPERATOR)]) == string(OR_OPERATOR) {
+
+				// Only one logical operator can be set for each column rules
+				// If OR logical operator has been set during parsing than it can´t have AND in the same column rules
+				if logicalOperator == OR_OPERATOR || string(ruleType[:2]) == string(AND_OPERATOR) {
+					return nil, ErrInvalidRule
+				}
+
+				logicalOperator = logicalOperatorType(ruleType[:2])
+				ruleType = allowedRules(ruleType[2:])
+			}
+			fmt.Println("logical operator:", logicalOperator)
+			//TODO: validate ruleType here
 			fmt.Println("type:", ruleType)
 
 			colRulesString = colRulesString[ruleTypeEndPos+1:]
@@ -109,12 +122,15 @@ func parseRules(rulesInput string) ([]ColRules, error) {
 			ruleValue = colRulesString[:valueEndPos]
 			fmt.Println("value", ruleValue)
 
+			//Create rule here and append
+
 			if valueEndPos+1 >= len(colRulesString) {
 				break
 			}
 			colRulesString = colRulesString[valueEndPos+1:]
 		}
 
+		// Create colRule here
 		if ruleEndPos+1 >= len(rulesInput) {
 			break
 		}
