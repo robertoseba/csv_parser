@@ -31,16 +31,13 @@ func NewFrom(ruleInput string) ([]*ColRules, error) {
 
 func parseRules(rulesInput string) ([]*ColRules, error) {
 
-	var ruleType allowedRules
+	//TODO: Instead of creating multiple strings, consider walking through the string and parsing it
 	rulesByCols := make([]*ColRules, 0)
 
 	for {
 		col := ""
-		ruleValue := ""
 		logicalOperator := AND_OPERATOR
-		ruleType = ""
 
-		//Retrieves end position of the column rule
 		ruleEndPos := strings.Index(rulesInput, RULE_SEPARATOR)
 		if ruleEndPos == -1 {
 			ruleEndPos = len(rulesInput)
@@ -59,8 +56,12 @@ func parseRules(rulesInput string) ([]*ColRules, error) {
 
 		// Update colRulesString to remove the already parsed column
 		colRulesString = colRulesString[colEndPos+1:]
+
 		// Retrieves each rule for the column (one column can have multiple rules with a logical operator)
 		for {
+			ruleValue := ""
+			var ruleType allowedRules
+
 			// Retrieve rule type and logical operator
 			ruleTypeEndPos := strings.Index(colRulesString, "(")
 			if ruleTypeEndPos == -1 {
@@ -102,9 +103,11 @@ func parseRules(rulesInput string) ([]*ColRules, error) {
 		}
 
 		rulesByCols = append(rulesByCols, colRule)
+
 		if ruleEndPos+1 >= len(rulesInput) {
 			break
 		}
+
 		// Update rulesInput to remove the already parsed column rules
 		rulesInput = rulesInput[ruleEndPos+1:]
 	}
