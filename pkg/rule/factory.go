@@ -22,54 +22,18 @@ var ErrInvalidRule = errors.New("invalid rule format")
 * Also, based on the rule value, the column can be set to be a number type.
  */
 func NewFrom(ruleInput string) ([]*ColRules, error) {
-	// if strings.Trim(ruleInput, " ") == "" {
-	// 	return nil, nil
-	// }
+	if strings.Trim(ruleInput, " ") == "" {
+		return nil, nil
+	}
 	return parseRules(ruleInput)
 
-	// splittedRulesByCols := strings.Split(ruleInput, RULE_SEPARATOR)
-
-	// rulesByCols := make([]*ColRules, 0, len(splittedRulesByCols))
-
-	// regexRuleFormat := regexp.MustCompile(STR_RULE_FORMAT)
-
-	// for _, colStrRules := range splittedRulesByCols {
-	// 	if strings.Trim(colStrRules, " ") == "" {
-	// 		continue
-	// 	}
-
-	// 	column, rules, ok := strings.Cut(colStrRules, COL_RULE_SEPARATOR)
-	// 	if !ok {
-	// 		return nil, ErrInvalidRule
-	// 	}
-	// 	if strings.Contains(rules, string(OR_OPERATOR)) && strings.Contains(rules, string(AND_OPERATOR)) {
-	// 		return nil, ErrInvalidRule
-	// 	}
-
-	// 	strRules := regexRuleFormat.FindAllString(rules, -1)
-
-	// 	colRule := newColRules(column, len(strRules))
-
-	// 	for _, strRule := range strRules {
-	// 		colRule.addRule(strRule)
-	// 	}
-
-	// 	rulesByCols = append(rulesByCols, colRule)
-
-	// }
-	// return rulesByCols, nil
 }
 
 func parseRules(rulesInput string) ([]*ColRules, error) {
-	if strings.Trim(rulesInput, " ") == "" {
-		return nil, nil
-	}
 
 	var ruleType allowedRules
-
 	rulesByCols := make([]*ColRules, 0)
 
-	fmt.Println("input: ", rulesInput)
 	for {
 		col := ""
 		ruleValue := ""
@@ -91,12 +55,10 @@ func parseRules(rulesInput string) ([]*ColRules, error) {
 			return nil, ErrInvalidRule
 		}
 		col = colRulesString[:colEndPos]
-		fmt.Println("col: ", col)
 		colRule := newColRules(col, 0)
 
 		// Update colRulesString to remove the already parsed column
 		colRulesString = colRulesString[colEndPos+1:]
-		fmt.Println("colRulesString: ", colRulesString)
 		// Retrieves each rule for the column (one column can have multiple rules with a logical operator)
 		for {
 			// Retrieve rule type and logical operator
@@ -117,8 +79,6 @@ func parseRules(rulesInput string) ([]*ColRules, error) {
 				logicalOperator = logicalOperatorType(ruleType[:2])
 				ruleType = allowedRules(ruleType[2:])
 			}
-			fmt.Println("logical operator:", logicalOperator)
-			fmt.Println("type:", ruleType)
 
 			if i := slices.Index(ALL_RULES, string(ruleType)); i == -1 {
 				return nil, ErrInvalidRule
@@ -132,7 +92,6 @@ func parseRules(rulesInput string) ([]*ColRules, error) {
 				return nil, ErrInvalidRule
 			}
 			ruleValue = colRulesString[:valueEndPos]
-			fmt.Println("value:", ruleValue)
 
 			colRule.addRule(fmt.Sprintf("%s%s(%s)", logicalOperator, ruleType, ruleValue))
 
