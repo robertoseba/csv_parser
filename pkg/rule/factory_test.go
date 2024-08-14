@@ -23,6 +23,9 @@ func TestFactoryRuleFromStr(t *testing.T) {
 		{name: "invalid-rule-more-than-one-logical-operator", inputParams: "col:eq(5)||lte(10)&&eq(10)",
 			expectedColRules: nil, expectedError: ErrInvalidRule},
 
+		{name: "invalid-rule-type", inputParams: "col:eq(5)||ltx(10)",
+			expectedColRules: nil, expectedError: ErrInvalidRule},
+
 		{name: "two-rules-2-cols", inputParams: "col1:eq(5)||eq(23);col2:neq(3)&&lt(10)",
 			expectedColRules: []*ColRules{
 				{
@@ -98,7 +101,6 @@ func TestFactoryRuleFromStr(t *testing.T) {
 			if !errors.Is(err, test.expectedError) {
 				t.Errorf("Wrong error: %v, Got: %v", test.expectedError, err)
 			}
-
 			for i, colRules := range rules {
 				if rules[i].Column() != test.expectedColRules[i].Column() {
 					t.Errorf("Wrong column: %v, Got: %v", test.expectedColRules[i], colRules)
@@ -107,7 +109,6 @@ func TestFactoryRuleFromStr(t *testing.T) {
 				if colRules.IsNumber() != test.expectedColRules[i].IsNumber() {
 					t.Errorf("Wrong isNumber: %v, Got: %v", test.expectedColRules[i].IsNumber(), colRules.IsNumber())
 				}
-
 				if colRules.logicalOperator != test.expectedColRules[i].logicalOperator {
 					t.Errorf("Wrong logicalOperator: %v, Got: %v", test.expectedColRules[i].logicalOperator, colRules.logicalOperator)
 				}
@@ -116,12 +117,10 @@ func TestFactoryRuleFromStr(t *testing.T) {
 					if rule.ruleType != test.expectedColRules[i].rules[idx].ruleType {
 						t.Errorf("Wrong operator: %v, Got: %v", test.expectedColRules[i].rules[idx].ruleType, rule.ruleType)
 					}
-
 					if rule.value != test.expectedColRules[i].rules[idx].value {
 						t.Errorf("Wrong value: %v, Got: %v", test.expectedColRules[i].rules[idx].value, rule.value)
 					}
-
-					if *rule.floatValue != *test.expectedColRules[i].rules[idx].floatValue {
+					if rule.floatValue != nil && *rule.floatValue != *test.expectedColRules[i].rules[idx].floatValue {
 						t.Errorf("Wrong floatValue: %v, Got: %v", test.expectedColRules[i].rules[idx].floatValue, rule.floatValue)
 					}
 				}
