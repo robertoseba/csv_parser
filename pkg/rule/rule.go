@@ -9,30 +9,30 @@ import (
 type allowedRules string
 
 const (
-	EQ_RULE  allowedRules = "eq"
-	GT_RULE  allowedRules = "gt"
-	LT_RULE  allowedRules = "lt"
-	GTE_RULE allowedRules = "gte"
-	LTE_RULE allowedRules = "lte"
-	NE_RULE  allowedRules = "neq"
+	eqRule  allowedRules = "eq"
+	gtRule  allowedRules = "gt"
+	ltRule  allowedRules = "lt"
+	gteRule allowedRules = "gte"
+	lteRule allowedRules = "lte"
+	neRule  allowedRules = "neq"
 )
 
-var ALL_RULES = []string{
-	string(EQ_RULE),
-	string(GT_RULE),
-	string(LT_RULE),
-	string(GTE_RULE),
-	string(LTE_RULE),
-	string(NE_RULE),
+var all_rules = []string{
+	string(eqRule),
+	string(gtRule),
+	string(ltRule),
+	string(gteRule),
+	string(lteRule),
+	string(neRule),
 }
 
-type Rule struct {
+type rule struct {
 	value      string
 	floatValue *float64
 	ruleType   allowedRules
 }
 
-func (rule *Rule) isValid(rowValue string) bool {
+func (rule *rule) isValid(rowValue string) bool {
 	if rule.floatValue != nil {
 		rowValueFloat, err := strconv.ParseFloat(rowValue, 64)
 		if err == nil {
@@ -45,17 +45,17 @@ func (rule *Rule) isValid(rowValue string) bool {
 
 func compareValues[T constraints.Ordered](first, second T, operator allowedRules) bool {
 	switch operator {
-	case EQ_RULE:
+	case eqRule:
 		return first == second
-	case GT_RULE:
+	case gtRule:
 		return first > second
-	case LT_RULE:
+	case ltRule:
 		return first < second
-	case GTE_RULE:
+	case gteRule:
 		return first >= second
-	case LTE_RULE:
+	case lteRule:
 		return first <= second
-	case NE_RULE:
+	case neRule:
 		return first != second
 	default:
 		panic("invalid operator")

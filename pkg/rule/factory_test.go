@@ -33,18 +33,18 @@ func TestFactoryRuleFromStr(t *testing.T) {
 					logicalOperator: "||",
 					column:          "col1",
 					isNumber:        true,
-					rules: []Rule{
-						{value: "5", ruleType: EQ_RULE, floatValue: &expectedFloat1},
-						{value: "23", ruleType: EQ_RULE, floatValue: &expectedFloat2},
+					rules: []rule{
+						{value: "5", ruleType: eqRule, floatValue: &expectedFloat1},
+						{value: "23", ruleType: eqRule, floatValue: &expectedFloat2},
 					},
 				},
 				{
 					logicalOperator: "&&",
 					column:          "col2",
 					isNumber:        true,
-					rules: []Rule{
-						{value: "3", ruleType: NE_RULE, floatValue: &expectedFloat3},
-						{value: "10", ruleType: LT_RULE, floatValue: &expectedFloat4},
+					rules: []rule{
+						{value: "3", ruleType: neRule, floatValue: &expectedFloat3},
+						{value: "10", ruleType: ltRule, floatValue: &expectedFloat4},
 					},
 				},
 			},
@@ -56,8 +56,8 @@ func TestFactoryRuleFromStr(t *testing.T) {
 					logicalOperator: "&&",
 					column:          "col1",
 					isNumber:        true,
-					rules: []Rule{
-						{value: "5", ruleType: EQ_RULE, floatValue: &expectedFloat1},
+					rules: []rule{
+						{value: "5", ruleType: eqRule, floatValue: &expectedFloat1},
 					},
 				},
 			},
@@ -68,16 +68,16 @@ func TestFactoryRuleFromStr(t *testing.T) {
 					logicalOperator: "&&",
 					column:          "col1",
 					isNumber:        true,
-					rules: []Rule{
-						{value: "5", ruleType: EQ_RULE, floatValue: &expectedFloat1},
+					rules: []rule{
+						{value: "5", ruleType: eqRule, floatValue: &expectedFloat1},
 					},
 				},
 				{
 					logicalOperator: "&&",
 					column:          "col1",
 					isNumber:        true,
-					rules: []Rule{
-						{value: "10", ruleType: LTE_RULE, floatValue: &expectedFloat4},
+					rules: []rule{
+						{value: "10", ruleType: lteRule, floatValue: &expectedFloat4},
 					},
 				},
 			},
@@ -89,9 +89,9 @@ func TestFactoryRuleFromStr(t *testing.T) {
 					logicalOperator: "&&",
 					column:          "col1",
 					isNumber:        true,
-					rules: []Rule{
-						{value: "5", ruleType: EQ_RULE, floatValue: &expectedFloat1},
-						{value: "10", ruleType: LTE_RULE, floatValue: &expectedFloat4},
+					rules: []rule{
+						{value: "5", ruleType: eqRule, floatValue: &expectedFloat1},
+						{value: "10", ruleType: lteRule, floatValue: &expectedFloat4},
 					},
 				},
 			},
@@ -103,8 +103,8 @@ func TestFactoryRuleFromStr(t *testing.T) {
 					logicalOperator: "&&",
 					column:          "email",
 					isNumber:        false,
-					rules: []Rule{
-						{value: "test@email.com", ruleType: EQ_RULE, floatValue: nil},
+					rules: []rule{
+						{value: "test@email.com", ruleType: eqRule, floatValue: nil},
 					},
 				},
 			},

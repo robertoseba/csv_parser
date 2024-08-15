@@ -7,7 +7,7 @@ import (
 type testTable struct {
 	testName   string
 	inputParam string
-	rule       Rule
+	rule       rule
 	expected   bool
 }
 
@@ -18,25 +18,25 @@ func TestEquals(t *testing.T) {
 		{
 			inputParam: "1",
 			testName:   "eq_rule-with_floats",
-			rule:       Rule{"1", &floatValue, EQ_RULE},
+			rule:       rule{"1", &floatValue, eqRule},
 			expected:   true,
 		},
 		{
 			inputParam: "2",
 			testName:   "not_eq_rule-with_floats",
-			rule:       Rule{"1", nil, EQ_RULE},
+			rule:       rule{"1", nil, eqRule},
 			expected:   false,
 		},
 		{
 			inputParam: "hello",
 			testName:   "eq_rule-with_strings",
-			rule:       Rule{"hello", nil, EQ_RULE},
+			rule:       rule{"hello", nil, eqRule},
 			expected:   true,
 		},
 		{
 			inputParam: "not_hello",
 			testName:   "not_eq_rule-with_strings",
-			rule:       Rule{"hello", nil, EQ_RULE},
+			rule:       rule{"hello", nil, eqRule},
 			expected:   false,
 		},
 	}
@@ -51,25 +51,25 @@ func TestNotEquals(t *testing.T) {
 		{
 			inputParam: "1",
 			testName:   "ne_rule-with_floats",
-			rule:       Rule{"1", &floatValue, NE_RULE},
+			rule:       rule{"1", &floatValue, neRule},
 			expected:   false,
 		},
 		{
 			inputParam: "2",
 			testName:   "ne_rule-with_floats",
-			rule:       Rule{"1", &floatValue, NE_RULE},
+			rule:       rule{"1", &floatValue, neRule},
 			expected:   true,
 		},
 		{
 			inputParam: "hello",
 			testName:   "ne_rule-with_strings",
-			rule:       Rule{"hello", nil, NE_RULE},
+			rule:       rule{"hello", nil, neRule},
 			expected:   false,
 		},
 		{
 			inputParam: "not_hello",
 			testName:   "ne_rule-with_strings",
-			rule:       Rule{"hello", nil, NE_RULE},
+			rule:       rule{"hello", nil, neRule},
 			expected:   true,
 		},
 	}
@@ -84,25 +84,25 @@ func TestGreaterThan(t *testing.T) {
 		{
 			inputParam: "1.02",
 			testName:   "true_with_float",
-			rule:       Rule{"1", &floatValue, GT_RULE},
+			rule:       rule{"1", &floatValue, gtRule},
 			expected:   true,
 		},
 		{
 			inputParam: "2",
 			testName:   "false_with_floats",
-			rule:       Rule{"3", nil, GT_RULE},
+			rule:       rule{"3", nil, gtRule},
 			expected:   false,
 		},
 		{
 			inputParam: "b",
 			testName:   "true_with_string",
-			rule:       Rule{"a", nil, GT_RULE},
+			rule:       rule{"a", nil, gtRule},
 			expected:   true,
 		},
 		{
 			inputParam: "c",
 			testName:   "false_with_strings",
-			rule:       Rule{"d", nil, GT_RULE},
+			rule:       rule{"d", nil, gtRule},
 			expected:   false,
 		},
 	}
@@ -117,25 +117,25 @@ func TestLessThan(t *testing.T) {
 		{
 			inputParam: "0.99",
 			testName:   "true_with_float",
-			rule:       Rule{"1", &floatValue, LT_RULE},
+			rule:       rule{"1", &floatValue, ltRule},
 			expected:   true,
 		},
 		{
 			inputParam: "3",
 			testName:   "false_with_float",
-			rule:       Rule{"1", &floatValue, LT_RULE},
+			rule:       rule{"1", &floatValue, ltRule},
 			expected:   false,
 		},
 		{
 			inputParam: "a",
 			testName:   "true_with_string",
-			rule:       Rule{"b", nil, LT_RULE},
+			rule:       rule{"b", nil, ltRule},
 			expected:   true,
 		},
 		{
 			inputParam: "a",
 			testName:   "false_with_strings",
-			rule:       Rule{"a", nil, LT_RULE},
+			rule:       rule{"a", nil, ltRule},
 			expected:   false,
 		},
 	}
@@ -150,31 +150,31 @@ func TestGreaterThanOrEqual(t *testing.T) {
 		{
 			inputParam: "1.02",
 			testName:   "true_with_float",
-			rule:       Rule{"1", &floatValue, GTE_RULE},
+			rule:       rule{"1", &floatValue, gteRule},
 			expected:   true,
 		},
 		{
 			inputParam: "1.00",
 			testName:   "true_with_float",
-			rule:       Rule{"1", &floatValue, GTE_RULE},
+			rule:       rule{"1", &floatValue, gteRule},
 			expected:   true,
 		},
 		{
 			inputParam: "0.45",
 			testName:   "false-with_floats",
-			rule:       Rule{"1", &floatValue, GTE_RULE},
+			rule:       rule{"1", &floatValue, gteRule},
 			expected:   false,
 		},
 		{
 			inputParam: "a",
 			testName:   "true_with_string",
-			rule:       Rule{"a", nil, GTE_RULE},
+			rule:       rule{"a", nil, gteRule},
 			expected:   true,
 		},
 		{
 			inputParam: "c",
 			testName:   "false_with_strings",
-			rule:       Rule{"d", nil, GTE_RULE},
+			rule:       rule{"d", nil, gteRule},
 			expected:   false,
 		},
 	}
@@ -189,31 +189,31 @@ func TestLessThanOrEqual(t *testing.T) {
 		{
 			inputParam: "0.99",
 			testName:   "true_with_float",
-			rule:       Rule{"1", &floatValue, LTE_RULE},
+			rule:       rule{"1", &floatValue, lteRule},
 			expected:   true,
 		},
 		{
 			inputParam: "1.00",
 			testName:   "true_with_float",
-			rule:       Rule{"1", &floatValue, LTE_RULE},
+			rule:       rule{"1", &floatValue, lteRule},
 			expected:   true,
 		},
 		{
 			inputParam: "1.001",
 			testName:   "false-with_floats",
-			rule:       Rule{"1", nil, LTE_RULE},
+			rule:       rule{"1", nil, lteRule},
 			expected:   false,
 		},
 		{
 			inputParam: "a",
 			testName:   "true_with_string",
-			rule:       Rule{"a", nil, LTE_RULE},
+			rule:       rule{"a", nil, lteRule},
 			expected:   true,
 		},
 		{
 			inputParam: "c",
 			testName:   "false_with_strings",
-			rule:       Rule{"b", nil, LTE_RULE},
+			rule:       rule{"b", nil, lteRule},
 			expected:   false,
 		},
 	}
