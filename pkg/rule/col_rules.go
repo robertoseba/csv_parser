@@ -2,7 +2,6 @@ package rule
 
 import (
 	"strconv"
-	"strings"
 
 	"github.com/robertoseba/csv_parser/pkg/row"
 )
@@ -54,27 +53,17 @@ func newColRules(column string, initNumRules int) *ColRules {
 	}
 }
 
-func (r *ColRules) addRule(strRule string) {
-	switch strRule[0:2] {
-	case "&&":
-		strRule = strRule[2:]
-	case "||":
-		r.logicalOperator = OR_OPERATOR
-		strRule = strRule[2:]
-	}
-
-	ruleType, ruleValue, _ := strings.Cut(strRule, "(")
-	ruleValue = strings.Trim(ruleValue, ")")
+func (r *ColRules) addRule(ruleType allowedRules, ruleValue string) {
 
 	ruleAsFloat, err := strconv.ParseFloat(ruleValue, 64)
 
 	if err == nil {
-		r.rules = append(r.rules, Rule{value: ruleValue, ruleType: allowedRules(ruleType), floatValue: &ruleAsFloat})
+		r.rules = append(r.rules, Rule{value: ruleValue, ruleType: ruleType, floatValue: &ruleAsFloat})
 		r.isNumber = true
 		return
 	}
 
 	r.isNumber = false
 
-	r.rules = append(r.rules, Rule{value: ruleValue, ruleType: allowedRules(ruleType), floatValue: nil})
+	r.rules = append(r.rules, Rule{value: ruleValue, ruleType: ruleType, floatValue: nil})
 }
