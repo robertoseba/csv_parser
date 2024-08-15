@@ -22,10 +22,10 @@ func TestFactoryRuleFromStr(t *testing.T) {
 		{name: "invalid-rule-no-parenthesis", inputParams: "col:eq[5]", expectedColRules: nil, expectedError: ErrInvalidRule},
 
 		{name: "invalid-rule-more-than-one-logical-operator", inputParams: "col:eq(5)||lte(10)&&eq(10)",
-			expectedColRules: nil, expectedError: ErrInvalidRule},
+			expectedColRules: nil, expectedError: ErrInvalidOperator},
 
 		{name: "invalid-rule-type", inputParams: "col:eq(5)||ltx(10)",
-			expectedColRules: nil, expectedError: ErrInvalidRule},
+			expectedColRules: nil, expectedError: ErrInvalidRuleType},
 
 		{name: "two-rules-2-cols", inputParams: "col1:eq(5)||eq(23);col2:neq(3)&&lt(10)",
 			expectedColRules: []*ColRules{

@@ -7,13 +7,9 @@ import (
 	"strings"
 )
 
-const RULE_SEPARATOR = ";"
-const COL_RULE_SEPARATOR = ":"
-
-// Rule formats examples: eq(5) or neq(3) or ||eq(5) or &&eq(5)
-var STR_RULE_FORMAT = `\s*(\|\||&&)?(` + strings.Join(ALL_RULES, "|") + `)\s*\((\w+)\)\s*`
-
 var ErrInvalidRule = errors.New("invalid rule format")
+var ErrInvalidOperator = errors.New("invalid rule logical operator format")
+var ErrInvalidRuleType = errors.New("invalid rule type")
 
 /**
 * Returns a slice of items with grouped rules by their columns.
@@ -30,71 +26,63 @@ func NewFrom(ruleInput string) ([]*ColRules, error) {
 }
 
 func parseRules(rulesInput string) ([]*ColRules, error) {
+	const ruleSeparator = ";"
 
-	//TODO: Instead of creating multiple strings, consider walking through the string and parsing it
-	rulesByCols := make([]*ColRules, 0)
+	rulesCount := strings.Count(rulesInput, ruleSeparator)
+	rulesByCols := make([]*ColRules, 0, rulesCount)
 
 	for {
-		col := ""
 		logicalOperator := AND_OPERATOR
 
-		ruleEndPos := strings.Index(rulesInput, RULE_SEPARATOR)
-		if ruleEndPos == -1 {
-			ruleEndPos = len(rulesInput)
+		endPos := parseEndPosColRules(rulesInput, ruleSeparator)
+		colRulesString := rulesInput[:endPos]
 
-		}
-
-		colRulesString := rulesInput[:ruleEndPos]
-
-		//Parses the column name
-		colEndPos := strings.Index(colRulesString, COL_RULE_SEPARATOR)
-		if colEndPos == -1 {
+		colName, remaining, ok := parseColName(colRulesString)
+		if !ok {
 			return nil, ErrInvalidRule
 		}
-		col = colRulesString[:colEndPos]
-		colRule := newColRules(col, 0)
 
-		// Update colRulesString to remove the already parsed column
-		colRulesString = colRulesString[colEndPos+1:]
+		colRule := newColRules(colName, 0)
+
+		colRulesString = remaining
 
 		// Retrieves each rule for the column (one column can have multiple rules with a logical operator)
 		for {
-			ruleValue := ""
-			var ruleType allowedRules
 
-			// Retrieve rule type and logical operator
-			ruleTypeEndPos := strings.Index(colRulesString, "(")
+			ruleTypeEndPos := strings.IndexByte(colRulesString, '(')
 			if ruleTypeEndPos == -1 {
 				return nil, ErrInvalidRule
 			}
-			ruleType = allowedRules(colRulesString[:ruleTypeEndPos])
-			if string(ruleType[:len(AND_OPERATOR)]) == string(AND_OPERATOR) ||
-				string(ruleType[0:len(OR_OPERATOR)]) == string(OR_OPERATOR) {
+
+			rule := colRulesString[:ruleTypeEndPos]
+			if rule[:len(AND_OPERATOR)] == string(AND_OPERATOR) ||
+				rule[0:len(OR_OPERATOR)] == string(OR_OPERATOR) {
 
 				// Only one logical operator can be set for each column rules
-				// If OR logical operator has been set during parsing than it can´t have AND in the same column rules
-				if logicalOperator == OR_OPERATOR && string(ruleType[:2]) == string(AND_OPERATOR) {
-					return nil, ErrInvalidRule
+				// If OR logical operator has been set during parsing
+				// than it can´t have AND in the same column rules
+				if logicalOperator == OR_OPERATOR && rule[:2] == string(AND_OPERATOR) {
+					return nil, ErrInvalidOperator
 				}
 
-				logicalOperator = logicalOperatorType(ruleType[:2])
-				ruleType = allowedRules(ruleType[2:])
+				logicalOperator = logicalOperatorType(rule[:2])
+				rule = rule[2:]
 			}
 
-			if i := slices.Index(ALL_RULES, string(ruleType)); i == -1 {
-				return nil, ErrInvalidRule
+			if !isRuleTypeValid(rule) {
+				return nil, ErrInvalidRuleType
 			}
 
 			colRulesString = colRulesString[ruleTypeEndPos+1:]
 
 			// Retrieves value for rule
-			valueEndPos := strings.Index(colRulesString, ")")
+			valueEndPos := strings.IndexByte(colRulesString, ')')
 			if valueEndPos == -1 {
 				return nil, ErrInvalidRule
 			}
-			ruleValue = colRulesString[:valueEndPos]
+			ruleValue := colRulesString[:valueEndPos]
 
-			colRule.addRule(fmt.Sprintf("%s%s(%s)", logicalOperator, ruleType, ruleValue))
+			colRule.addRule(fmt.Sprintf("%s%s(%s)", logicalOperator, allowedRules(rule), ruleValue))
 
 			if valueEndPos+1 >= len(colRulesString) {
 				break
@@ -104,12 +92,64 @@ func parseRules(rulesInput string) ([]*ColRules, error) {
 
 		rulesByCols = append(rulesByCols, colRule)
 
-		if ruleEndPos+1 >= len(rulesInput) {
+		if endPos+1 >= len(rulesInput) {
 			break
 		}
 
 		// Update rulesInput to remove the already parsed column rules
-		rulesInput = rulesInput[ruleEndPos+1:]
+		rulesInput = rulesInput[endPos+1:]
 	}
 	return rulesByCols, nil
 }
+
+func parseColName(ruleInput string) (string, string, bool) {
+	colEndPos := strings.IndexByte(ruleInput, ':')
+	if colEndPos == -1 {
+		return "", ruleInput, false
+	}
+	return ruleInput[:colEndPos], ruleInput[colEndPos+1:], true
+}
+
+func parseEndPosColRules(ruleInput string, ruleSeparator string) int {
+	ruleEndPos := strings.Index(ruleInput, ruleSeparator)
+	if ruleEndPos == -1 {
+		ruleEndPos = len(ruleInput)
+	}
+
+	return ruleEndPos
+}
+
+func isRuleTypeValid(rule string) bool {
+	if i := slices.Index(ALL_RULES, rule); i == -1 {
+		return false
+	}
+	return true
+}
+
+// func parseRuleType(ruleInput string, currLogicalOperator logicalOperatorType) (allowedRules, string, bool) {
+// 	ruleTypeEndPos := strings.IndexByte(ruleInput, '(')
+// 	if ruleTypeEndPos == -1 {
+// 		return "", ruleInput, false
+// 	}
+
+// 	ruleType := allowedRules(ruleInput[:ruleTypeEndPos])
+// 	if string(ruleType[:len(AND_OPERATOR)]) == string(AND_OPERATOR) ||
+// 		string(ruleType[:len(OR_OPERATOR)]) == string(OR_OPERATOR) {
+
+// 		// Only one logical operator can be set for each column rules
+// 		// If OR logical operator has been set during parsing than it can´t have AND in the same column rules
+// 		if currLogicalOperator == OR_OPERATOR && string(ruleType[:2]) == string(AND_OPERATOR) {
+// 			return "", "", false
+// 		}
+
+// 		logicalOperator = logicalOperatorType(ruleType[:2])
+// 		ruleType = allowedRules(ruleType[2:])
+// 	}
+
+// 	if i := slices.Index(ALL_RULES, string(ruleType)); i == -1 {
+// 		return "", ruleInput, false
+// 	}
+
+// 	return ruleType, ruleInput[ruleTypeEndPos+1:],
+
+// }
