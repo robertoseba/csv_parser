@@ -17,14 +17,14 @@ type CsvConfig struct {
 	ColRules   []parser.ColRules
 }
 
-type CsvParser struct {
+type CsvReader struct {
 	currentLine int
 	config      *CsvConfig
 	headers     *row.Row
 	reader      *csv.Reader
 }
 
-func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
+func NewReader(ioReader io.Reader, config *CsvConfig) (*CsvReader, error) {
 	if config == nil {
 		config = &CsvConfig{
 			ColFilters: make([]string, 0),
@@ -49,7 +49,7 @@ func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 		return nil, errors.New("filter for columns has invalid column")
 	}
 
-	return &CsvParser{
+	return &CsvReader{
 		currentLine: 1,
 		config:      config,
 		reader:      csvReader,
@@ -57,7 +57,7 @@ func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
 	}, nil
 }
 
-func (r *CsvParser) ReadLine() (*row.Row, error) {
+func (r *CsvReader) ReadLine() (*row.Row, error) {
 	recordArr, err := r.reader.Read()
 
 	if errors.Is(err, io.EOF) {
@@ -88,7 +88,7 @@ func (r *CsvParser) ReadLine() (*row.Row, error) {
 	return row.Only(r.config.ColFilters), nil
 }
 
-func (r *CsvParser) Headers() *row.Row {
+func (r *CsvReader) Headers() *row.Row {
 	return r.headers.Only(r.config.ColFilters)
 }
 

@@ -18,7 +18,7 @@ func TestReaderHeaders(t *testing.T) {
 
 	expected := []string{"col1", "col2", "col3"}
 
-	results, err := NewParser(testReader, config)
+	results, err := NewReader(testReader, config)
 
 	if err != nil {
 		t.Errorf("Failted creating parser: %v", err)
@@ -63,7 +63,7 @@ func TestReaderColFilters(t *testing.T) {
 
 		t.Run(test.name, func(t *testing.T) {
 
-			results, err := NewParser(testReader, test.inputConfig)
+			results, err := NewReader(testReader, test.inputConfig)
 
 			if err != nil {
 				if err.Error() != test.err.Error() {
@@ -140,7 +140,7 @@ func TestReaderReadLine(t *testing.T) {
 
 		t.Run(test.name, func(t *testing.T) {
 
-			results, err := NewParser(testReader, test.inputConfig)
+			results, err := NewReader(testReader, test.inputConfig)
 
 			if err != nil {
 				t.Errorf("Failed creating parser: %v", err)
