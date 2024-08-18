@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/robertoseba/csv_parser/pkg/parser"
-	"github.com/robertoseba/csv_parser/pkg/row"
+	"github.com/robertoseba/csv_parser/internal/parser"
+	"github.com/robertoseba/csv_parser/internal/row"
 )
 
 var ErrInvalidRow = errors.New("invalid row")

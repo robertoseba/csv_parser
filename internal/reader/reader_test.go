@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/robertoseba/csv_parser/pkg/parser"
+	"github.com/robertoseba/csv_parser/internal/parser"
 )
 
 func TestReaderHeaders(t *testing.T) {

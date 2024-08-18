@@ -3,7 +3,7 @@ package parser
 import (
 	"strconv"
 
-	"github.com/robertoseba/csv_parser/pkg/row"
+	"github.com/robertoseba/csv_parser/internal/row"
 )
 
 type logicalOperatorType string

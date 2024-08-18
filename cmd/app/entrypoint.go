@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/robertoseba/csv_parser/pkg/parser"
-	"github.com/robertoseba/csv_parser/pkg/printer"
-	"github.com/robertoseba/csv_parser/pkg/reader"
+	"github.com/robertoseba/csv_parser/internal/parser"
+	"github.com/robertoseba/csv_parser/internal/printer"
+	"github.com/robertoseba/csv_parser/internal/reader"
 )
 
 func Run(ioReader io.Reader, colFilters string, rowRules string) {
