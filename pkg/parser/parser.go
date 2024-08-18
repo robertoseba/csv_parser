@@ -1,111 +1,138 @@
 package parser
 
 import (
-	"encoding/csv"
 	"errors"
-	"fmt"
-	"io"
-
-	"github.com/robertoseba/csv_parser/pkg/row"
-	"github.com/robertoseba/csv_parser/pkg/rule"
+	"slices"
+	"strings"
 )
 
-var ErrInvalidRow = errors.New("invalid row")
+var ErrInvalidRule = errors.New("invalid rule format")
+var ErrInvalidOperator = errors.New("invalid rule logical operator format")
+var ErrInvalidRuleType = errors.New("invalid rule type")
 
-type CsvConfig struct {
-	ColFilters []string
-	ColRules   []rule.ColRules
+/**
+* Returns a slice of items with grouped rules by their columns.
+* Each column can have multiple rules and have a logical operator
+* that defines how the rules should be evaluated.
+* Also, based on the rule value, the column can be set to be a number type.
+ */
+func ParseRules(ruleInput string) ([]ColRules, error) {
+	if strings.Trim(ruleInput, " ") == "" {
+		return nil, nil
+	}
+	return parse(ruleInput)
+
 }
 
-type CsvParser struct {
-	currentLine int
-	config      *CsvConfig
-	headers     *row.Row
-	reader      *csv.Reader
-}
+func parse(rulesInput string) ([]ColRules, error) {
+	const ruleSeparator = ";"
 
-func NewParser(ioReader io.Reader, config *CsvConfig) (*CsvParser, error) {
-	if config == nil {
-		config = &CsvConfig{
-			ColFilters: make([]string, 0),
-			ColRules:   nil,
+	rulesCount := strings.Count(rulesInput, ruleSeparator)
+	rulesByCols := make([]ColRules, 0, rulesCount)
+
+	for {
+		logicalOperator := andOperator
+
+		colRuleEndPos := strings.Index(rulesInput, ruleSeparator)
+		if colRuleEndPos == -1 {
+			colRuleEndPos = len(rulesInput)
 		}
-	}
 
-	csvReader := csv.NewReader(ioReader)
-
-	headersArr, err := csvReader.Read()
-	if err != nil {
-		return nil, fmt.Errorf("error parsing headers: %w", err)
-	}
-
-	headers := row.NewRow(0, headersArr, headersArr)
-
-	if config.ColRules != nil && !isColRulesValid(config.ColRules, headers) {
-		return nil, errors.New("rules have invalid column")
-	}
-
-	if !isFilterColsValid(config.ColFilters, headers) {
-		return nil, errors.New("filter for columns has invalid column")
-	}
-
-	return &CsvParser{
-		currentLine: 1,
-		config:      config,
-		reader:      csvReader,
-		headers:     headers,
-	}, nil
-}
-
-func (r *CsvParser) ReadLine() (*row.Row, error) {
-	recordArr, err := r.reader.Read()
-
-	if errors.Is(err, io.EOF) {
-		return nil, err
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("unexpected error reading line: %w", err)
-	}
-
-	row := row.NewRow(r.currentLine, r.headers.Values(), recordArr)
-
-	if r.config.ColRules == nil {
-		r.currentLine++
-		return row.Only(r.config.ColFilters), nil
-	}
-
-	//TODO: How do colRules interact between them? If one is valid, should we return the row?
-	// Should we define the logical operator for interaction between columns? EX: (OR)col1:eq(5)||lte(10);col2:gte(10)
-	// Currently we are assuming that all columns' rules must be valid to return the row
-	for _, colRule := range r.config.ColRules {
-		if !colRule.IsValid(row) {
-			return nil, ErrInvalidRow
+		colName, remaining, ok := parseColName(rulesInput[:colRuleEndPos])
+		if !ok {
+			return nil, ErrInvalidRule
 		}
+
+		colRule := newColRules(colName, 0)
+		// Retrieves each rule for the column (one column can have multiple rules with a logical operator)
+		for {
+
+			ruleTypeEndPos := strings.IndexByte(remaining, '(')
+			if ruleTypeEndPos == -1 {
+				return nil, ErrInvalidRule
+			}
+
+			var rule allowedRules
+			var err error
+
+			rule, logicalOperator, err = parseRuleTypeAndOperator(remaining[:ruleTypeEndPos], logicalOperator)
+
+			if err != nil {
+				return nil, err
+			}
+
+			remaining = remaining[ruleTypeEndPos+1:]
+
+			valueEndPos := strings.IndexByte(remaining, ')')
+			if valueEndPos == -1 {
+				return nil, ErrInvalidRule
+			}
+			ruleValue := remaining[:valueEndPos]
+
+			colRule.addRule(allowedRules(rule), ruleValue)
+
+			if valueEndPos+1 >= len(remaining) {
+				break
+			}
+			remaining = remaining[valueEndPos+1:]
+		}
+
+		colRule.logicalOperator = logicalOperator
+		rulesByCols = append(rulesByCols, *colRule)
+
+		if colRuleEndPos+1 >= len(rulesInput) {
+			break
+		}
+
+		// Update rulesInput to remove the already parsed column rules
+		rulesInput = rulesInput[colRuleEndPos+1:]
+	}
+	return rulesByCols, nil
+}
+
+func parseColName(ruleInput string) (string, string, bool) {
+	colEndPos := strings.IndexByte(ruleInput, ':')
+	if colEndPos == -1 {
+		return "", ruleInput, false
+	}
+	return ruleInput[:colEndPos], ruleInput[colEndPos+1:], true
+}
+
+func parseRuleTypeAndOperator(ruleInput string, previousOperator logicalOperatorType) (allowedRules, logicalOperatorType, error) {
+
+	var rule string
+	var logicalOperator logicalOperatorType
+
+	switch {
+	case ruleInput[:len(andOperator)] == string(andOperator):
+		logicalOperator = andOperator
+		rule = ruleInput[len(andOperator):]
+
+	case ruleInput[:len(orOperator)] == string(orOperator):
+		logicalOperator = orOperator
+		rule = ruleInput[len(orOperator):]
+	default:
+		logicalOperator = previousOperator
+		rule = ruleInput
+	}
+	// Only one logical operator can be set for each column rules
+	// Since we start with AND_OPERATOR, If OR_OPERATOR  has been set during
+	// parsing than it can´t be set again to AND_OPERATOR as it would signify
+	// multiple operators for the same column rules
+	if previousOperator == orOperator && logicalOperator == andOperator {
+		return "", previousOperator, ErrInvalidOperator
 	}
 
-	r.currentLine++
-	return row.Only(r.config.ColFilters), nil
-}
-
-func (r *CsvParser) Headers() *row.Row {
-	return r.headers.Only(r.config.ColFilters)
-}
-
-func isColRulesValid(colRules []rule.ColRules, headers *row.Row) bool {
-	for _, colRule := range colRules {
-		if !headers.HasColumn(colRule.Column()) {
-			return false
-		}
+	if !isRuleTypeValid(rule) {
+		return "", logicalOperator, ErrInvalidRuleType
 	}
-	return true
+
+	return allowedRules(rule), logicalOperator, nil
 }
 
-func isFilterColsValid(cols []string, headers *row.Row) bool {
-	for _, col := range cols {
-		if !headers.HasColumn(col) {
-			return false
-		}
+func isRuleTypeValid(rule string) bool {
+	if i := slices.Index(all_rules, rule); i == -1 {
+		return false
 	}
 	return true
 }

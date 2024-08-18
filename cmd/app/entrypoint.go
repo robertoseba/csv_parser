@@ -9,22 +9,22 @@ import (
 
 	"github.com/robertoseba/csv_parser/pkg/parser"
 	"github.com/robertoseba/csv_parser/pkg/printer"
-	"github.com/robertoseba/csv_parser/pkg/rule"
+	"github.com/robertoseba/csv_parser/pkg/reader"
 )
 
 func Run(ioReader io.Reader, colFilters string, rowRules string) {
-	rules, err := rule.NewFrom(rowRules)
+	rules, err := parser.ParseRules(rowRules)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error parsing rules: %s\n", err)
 		os.Exit(1)
 	}
 
-	csvConfig := &parser.CsvConfig{
+	csvConfig := &reader.CsvConfig{
 		ColFilters: splitFilters(colFilters),
 		ColRules:   rules,
 	}
 
-	reader, err := parser.NewParser(ioReader, csvConfig)
+	csvReader, err := reader.NewParser(ioReader, csvConfig)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error generating csv: %s\n", err)
 		os.Exit(1)
@@ -32,16 +32,16 @@ func Run(ioReader io.Reader, colFilters string, rowRules string) {
 
 	printer := printer.NewPrinter()
 
-	printer.PrintHeader(reader.Headers().Values())
+	printer.PrintHeader(csvReader.Headers().Values())
 
 	for {
-		row, err := reader.ReadLine()
+		row, err := csvReader.ReadLine()
 
 		if errors.Is(err, io.EOF) {
 			break
 		}
 
-		if errors.Is(err, parser.ErrInvalidRow) {
+		if errors.Is(err, reader.ErrInvalidRow) {
 			continue
 		}
 

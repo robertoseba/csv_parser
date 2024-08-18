@@ -2,168 +2,149 @@ package parser
 
 import (
 	"errors"
-	"io"
-	"slices"
-	"strings"
 	"testing"
-
-	"github.com/robertoseba/csv_parser/pkg/rule"
 )
 
-func TestParserHeaders(t *testing.T) {
-
-	config := &CsvConfig{}
-
-	testReader := strings.NewReader("col1,col2,col3\nrow_1000,2,3\nrow_11,5,6\nrow_99,8,9")
-
-	expected := []string{"col1", "col2", "col3"}
-
-	results, err := NewParser(testReader, config)
-
-	if err != nil {
-		t.Errorf("Failted creating parser: %v", err)
-	}
-
-	if !slices.Equal(results.Headers().Values(), expected) {
-		t.Errorf("Expected %v, got %v", expected, results.Headers().Values())
-	}
-}
-
-func TestParserColFilters(t *testing.T) {
-	tests := []struct {
-		name        string
-		inputConfig *CsvConfig
-		expected    []string
-		err         error
-	}{
-		{
-			name:        "ColFilters col1 and col2",
-			inputConfig: &CsvConfig{ColFilters: []string{"col1", "col2"}},
-			expected:    []string{"col1", "col2"},
-			err:         nil,
-		},
-		{
-			name:        "No colFilters",
-			inputConfig: &CsvConfig{},
-			expected:    nil,
-			err:         nil,
-		},
-		{
-			name: "Error when ColFilters not present in column headers",
-			inputConfig: &CsvConfig{
-				ColFilters: []string{"col4", "col5"},
-			},
-			expected: nil,
-			err:      errors.New("filter for columns has invalid column"),
-		},
-	}
-
-	for _, test := range tests {
-		testReader := strings.NewReader("col1,col2,col3\nrow_1000,2,3\nrow_11,5,6\nrow_99,8,9")
-
-		t.Run(test.name, func(t *testing.T) {
-
-			results, err := NewParser(testReader, test.inputConfig)
-
-			if err != nil {
-				if err.Error() != test.err.Error() {
-					t.Errorf("Failed creating parser: %v", err)
-				}
-			}
-
-			if results != nil {
-				if !slices.Equal(results.config.ColFilters, test.expected) {
-					t.Errorf("Expected %v, got %v", test.expected, results.config.ColFilters)
-				}
-			}
-		})
-	}
-}
-
-func TestParserReadLine(t *testing.T) {
-	testRule, _ := rule.NewFrom("col2:gte(8)")
+func TestParseRules(t *testing.T) {
+	expectedFloat1 := 5.0
+	expectedFloat2 := 23.0
+	expectedFloat3 := 3.0
+	expectedFloat4 := 10.0
 
 	tests := []struct {
-		name        string
-		inputConfig *CsvConfig
-		expected    [][]string
-		errs        []error
+		name             string
+		inputParams      string
+		expectedColRules []*ColRules
+		expectedError    error
 	}{
-		{
-			name:        "reads all lines with no filter nor rules",
-			inputConfig: &CsvConfig{},
-			expected: [][]string{
-				{"row_1000", "2", "3"},
-				{"row_11", "5", "6"},
-				{"row_99", "8", "9"},
-			},
-			errs: []error{
-				nil,
-				nil,
-				nil,
+		{name: "no-rules", inputParams: "", expectedColRules: nil, expectedError: nil},
+		{name: "invalid-rule-col-separator", inputParams: "col-eq(5)", expectedColRules: nil, expectedError: ErrInvalidRule},
+		{name: "invalid-rule-no-parenthesis", inputParams: "col:eq[5]", expectedColRules: nil, expectedError: ErrInvalidRule},
+
+		{name: "invalid-rule-more-than-one-logical-operator", inputParams: "col:eq(5)||lte(10)&&eq(10)",
+			expectedColRules: nil, expectedError: ErrInvalidOperator},
+
+		{name: "invalid-rule-type", inputParams: "col:eq(5)||ltx(10)",
+			expectedColRules: nil, expectedError: ErrInvalidRuleType},
+
+		{name: "two-rules-2-cols", inputParams: "col1:eq(5)||eq(23);col2:neq(3)&&lt(10)",
+			expectedColRules: []*ColRules{
+				{
+					logicalOperator: "||",
+					column:          "col1",
+					isNumber:        true,
+					rules: []rule{
+						{value: "5", ruleType: eqRule, floatValue: &expectedFloat1},
+						{value: "23", ruleType: eqRule, floatValue: &expectedFloat2},
+					},
+				},
+				{
+					logicalOperator: "&&",
+					column:          "col2",
+					isNumber:        true,
+					rules: []rule{
+						{value: "3", ruleType: neRule, floatValue: &expectedFloat3},
+						{value: "10", ruleType: ltRule, floatValue: &expectedFloat4},
+					},
+				},
 			},
 		},
-		{
-			name:        "readlines with col1 and col2 filters",
-			inputConfig: &CsvConfig{ColFilters: []string{"col1", "col2"}},
-			expected: [][]string{
-				{"row_1000", "2"},
-				{"row_11", "5"},
-				{"row_99", "8"},
-			},
-			errs: []error{
-				nil,
-				nil,
-				nil,
+
+		{name: "simple-rule-1-col", inputParams: "col1:eq(5)",
+			expectedColRules: []*ColRules{
+				{
+					logicalOperator: "&&",
+					column:          "col1",
+					isNumber:        true,
+					rules: []rule{
+						{value: "5", ruleType: eqRule, floatValue: &expectedFloat1},
+					},
+				},
 			},
 		},
-		{
-			name: "returns error when line fails rules, returning only valid rows",
-			inputConfig: &CsvConfig{
-				ColRules: testRule,
+		{name: "repeated-col", inputParams: "col1:eq(5);col1:lte(10)",
+			expectedColRules: []*ColRules{
+				{
+					logicalOperator: "&&",
+					column:          "col1",
+					isNumber:        true,
+					rules: []rule{
+						{value: "5", ruleType: eqRule, floatValue: &expectedFloat1},
+					},
+				},
+				{
+					logicalOperator: "&&",
+					column:          "col1",
+					isNumber:        true,
+					rules: []rule{
+						{value: "10", ruleType: lteRule, floatValue: &expectedFloat4},
+					},
+				},
 			},
-			expected: [][]string{
-				nil,
-				nil,
-				{"row_99", "8", "9"},
+		},
+
+		{name: "implict-and-logical-operator", inputParams: "col1:eq(5)lte(10)",
+			expectedColRules: []*ColRules{
+				{
+					logicalOperator: "&&",
+					column:          "col1",
+					isNumber:        true,
+					rules: []rule{
+						{value: "5", ruleType: eqRule, floatValue: &expectedFloat1},
+						{value: "10", ruleType: lteRule, floatValue: &expectedFloat4},
+					},
+				},
 			},
-			errs: []error{
-				ErrInvalidRow,
-				ErrInvalidRow,
-				nil,
+		},
+
+		{name: "rule_with_strings", inputParams: "email:eq(test@email.com);",
+			expectedColRules: []*ColRules{
+				{
+					logicalOperator: "&&",
+					column:          "email",
+					isNumber:        false,
+					rules: []rule{
+						{value: "test@email.com", ruleType: eqRule, floatValue: nil},
+					},
+				},
 			},
 		},
 	}
 
 	for _, test := range tests {
-		testReader := strings.NewReader("col1,col2,col3\nrow_1000,2,3\nrow_11,5,6\nrow_99,8,9")
-
 		t.Run(test.name, func(t *testing.T) {
+			rules, err := ParseRules(test.inputParams)
 
-			results, err := NewParser(testReader, test.inputConfig)
-
-			if err != nil {
-				t.Errorf("Failed creating parser: %v", err)
+			if err != nil && test.expectedError == nil {
+				t.Errorf("Unexpected error: %v", err)
 			}
 
-			i := 0
-
-			for {
-				row, err := results.ReadLine()
-
-				if errors.Is(err, io.EOF) {
-					break
+			if !errors.Is(err, test.expectedError) {
+				t.Errorf("Wrong error: %v, Got: %v", test.expectedError, err)
+			}
+			for i, colRules := range rules {
+				if rules[i].Column() != test.expectedColRules[i].Column() {
+					t.Errorf("Wrong column: %v, Got: %v", test.expectedColRules[i], colRules)
 				}
 
-				if !errors.Is(err, test.errs[i]) {
-					t.Errorf("Expected %v, got %v", test.errs[i], err)
+				if colRules.IsNumber() != test.expectedColRules[i].IsNumber() {
+					t.Errorf("Wrong isNumber: %v, Got: %v", test.expectedColRules[i].IsNumber(), colRules.IsNumber())
+				}
+				if colRules.logicalOperator != test.expectedColRules[i].logicalOperator {
+					t.Errorf("Wrong logicalOperator: %v, Got: %v", test.expectedColRules[i].logicalOperator, colRules.logicalOperator)
 				}
 
-				if row != nil && !slices.Equal(row.Values(), test.expected[i]) {
-					t.Errorf("Expected %v, got %v", test.expected[i], row.Values())
+				for idx, rule := range colRules.rules {
+					if rule.ruleType != test.expectedColRules[i].rules[idx].ruleType {
+						t.Errorf("Wrong operator: %v, Got: %v", test.expectedColRules[i].rules[idx].ruleType, rule.ruleType)
+					}
+					if rule.value != test.expectedColRules[i].rules[idx].value {
+						t.Errorf("Wrong value: %v, Got: %v", test.expectedColRules[i].rules[idx].value, rule.value)
+					}
+					if rule.floatValue != nil && *rule.floatValue != *test.expectedColRules[i].rules[idx].floatValue {
+						t.Errorf("Wrong floatValue: %v, Got: %v", test.expectedColRules[i].rules[idx].floatValue, rule.floatValue)
+					}
 				}
-
-				i += 1
 			}
 		})
 	}
