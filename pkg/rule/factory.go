@@ -16,7 +16,7 @@ var ErrInvalidRuleType = errors.New("invalid rule type")
 * that defines how the rules should be evaluated.
 * Also, based on the rule value, the column can be set to be a number type.
  */
-func NewFrom(ruleInput string) ([]*ColRules, error) {
+func NewFrom(ruleInput string) ([]ColRules, error) {
 	if strings.Trim(ruleInput, " ") == "" {
 		return nil, nil
 	}
@@ -24,11 +24,11 @@ func NewFrom(ruleInput string) ([]*ColRules, error) {
 
 }
 
-func parseRules(rulesInput string) ([]*ColRules, error) {
+func parseRules(rulesInput string) ([]ColRules, error) {
 	const ruleSeparator = ";"
 
 	rulesCount := strings.Count(rulesInput, ruleSeparator)
-	rulesByCols := make([]*ColRules, 0, rulesCount)
+	rulesByCols := make([]ColRules, 0, rulesCount)
 
 	for {
 		logicalOperator := andOperator
@@ -78,7 +78,7 @@ func parseRules(rulesInput string) ([]*ColRules, error) {
 		}
 
 		colRule.logicalOperator = logicalOperator
-		rulesByCols = append(rulesByCols, colRule)
+		rulesByCols = append(rulesByCols, *colRule)
 
 		if colRuleEndPos+1 >= len(rulesInput) {
 			break

@@ -14,7 +14,7 @@ var ErrInvalidRow = errors.New("invalid row")
 
 type CsvConfig struct {
 	ColFilters []string
-	ColRules   []*rule.ColRules
+	ColRules   []rule.ColRules
 }
 
 type CsvParser struct {
@@ -92,7 +92,7 @@ func (r *CsvParser) Headers() *row.Row {
 	return r.headers.Only(r.config.ColFilters)
 }
 
-func isColRulesValid(colRules []*rule.ColRules, headers *row.Row) bool {
+func isColRulesValid(colRules []rule.ColRules, headers *row.Row) bool {
 	for _, colRule := range colRules {
 		if !headers.HasColumn(colRule.Column()) {
 			return false
