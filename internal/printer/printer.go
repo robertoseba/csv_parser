@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/term"
@@ -22,7 +23,9 @@ type Printer struct {
 
 func NewPrinter(inputChan chan []string, wg *sync.WaitGroup) *Printer {
 	re := lipgloss.NewRenderer(os.Stdout)
-	baseStyle := re.NewStyle().Padding(0, 3).TabWidth(4)
+	baseStyle := re.NewStyle().
+		Padding(0, 3).
+		TabWidth(4)
 
 	return &Printer{
 		onScreen:    term.IsTerminal(int(os.Stdout.Fd())),
@@ -36,6 +39,9 @@ func NewPrinter(inputChan chan []string, wg *sync.WaitGroup) *Printer {
 }
 
 func (p *Printer) Start() {
+	startTime := time.Now()
+	defer p.terminate(startTime)
+
 	headers := <-p.inputChan
 	p.printHeader(headers)
 
@@ -43,44 +49,33 @@ func (p *Printer) Start() {
 		p.printRow(rows)
 	}
 
-	p.wg.Done()
-
 }
 
 func (p *Printer) printHeader(headers []string) {
-	if !p.onScreen {
-		fmt.Printf("%s\n", strings.Join(headers, ","))
-		return
-	}
-
-	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
-	cellWidth := physicalWidth / len(headers)
-	p.style = p.style.MaxWidth(cellWidth)
-
-	p.maxColWidth = cellWidth
-	style := p.style.
-		Foreground(lipgloss.Color("#000000")).
-		Background(lipgloss.Color("#D7FF87"))
-
-	for _, header := range headers {
-		fmt.Print(style.Render(resizeCell(header, p.maxColWidth)))
-	}
-	fmt.Println()
-	p.lineNumber++
+	p.calcCellSize(headers)
+	headerStyle := p.style.Foreground(lipgloss.Color("#000000")).Background(lipgloss.Color("#D7FF87"))
+	p.print(headerStyle, headers)
 }
 
-func (p *Printer) printRow(rows []string) {
+func (p *Printer) printRow(line []string) {
 	if !p.onScreen {
-		fmt.Printf("%s\n", strings.Join(rows, ","))
+		fmt.Printf("%s\n", strings.Join(line, ","))
 		return
 	}
 
-	style := p.style.
-		Foreground(lipgloss.Color("#D7FF87"))
+	rowStyle := p.style.Foreground(lipgloss.Color("#D7FF87")).Faint(p.lineNumber%2 == 0)
+	p.print(rowStyle, line)
+}
 
-	for _, row := range rows {
-		fmt.Print(style.Faint(p.lineNumber%2 == 0).Render(resizeCell(row, p.maxColWidth)))
+func (p *Printer) print(style lipgloss.Style, line []string) {
+	if !p.onScreen {
+		fmt.Printf("%s\n", strings.Join(line, ","))
 	}
+
+	for _, cell := range line {
+		fmt.Print(style.Render(resizeCell(cell, p.maxColWidth)))
+	}
+
 	fmt.Println()
 	p.lineNumber++
 }
@@ -90,4 +85,21 @@ func resizeCell(cell string, maxWidth int) string {
 		return cell[:maxWidth]
 	}
 	return cell + strings.Repeat(" ", maxWidth-len(cell))
+}
+
+func (p *Printer) terminate(start time.Time) {
+	elapsed := time.Since(start)
+	if p.onScreen {
+		fmt.Printf("\n Elapsed time: %s\n", elapsed)
+		fmt.Println()
+	}
+	p.wg.Done()
+}
+
+func (p *Printer) calcCellSize(headers []string) {
+	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
+	cellWidth := physicalWidth / len(headers)
+	p.style = p.style.MaxWidth(cellWidth)
+
+	p.maxColWidth = cellWidth
 }
