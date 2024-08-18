@@ -22,7 +22,7 @@ func BenchmarkEntrypoint(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		Run(filename, "col1,col2", "col1:eq(row_22)")
+		Run(filename, "col1,col2", "col1:eq(row_22)", false)
 	}
 	b.StopTimer()
 	os.Remove(filename)

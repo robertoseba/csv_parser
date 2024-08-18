@@ -1,9 +1,5 @@
 package row
 
-import (
-	"strings"
-)
-
 type Row struct {
 	rowNumber int
 	data      map[string]string
@@ -24,15 +20,12 @@ func NewRow(rowNumber int, headers []string, record []string) *Row {
 	return row
 }
 
-func (r *Row) String() string {
-	return strings.Join(r.Values(), "\t")
-}
-
 func (r *Row) Values() []string {
-	values := make([]string, 0, len(r.data))
-
+	values := make([]string, len(r.data))
+	i := 0
 	for _, key := range r.headers {
-		values = append(values, r.data[key])
+		values[i] = r.data[key]
+		i++
 	}
 
 	return values

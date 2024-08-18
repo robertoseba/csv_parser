@@ -2,7 +2,6 @@ package reader
 
 import (
 	"errors"
-	"io"
 	"slices"
 	"strings"
 	"testing"
@@ -24,8 +23,8 @@ func TestReaderHeaders(t *testing.T) {
 		t.Errorf("Failted creating parser: %v", err)
 	}
 
-	if !slices.Equal(results.Headers().Values(), expected) {
-		t.Errorf("Expected %v, got %v", expected, results.Headers().Values())
+	if !slices.Equal(results.headers.Values(), expected) {
+		t.Errorf("Expected %v, got %v", expected, results.headers.Values())
 	}
 }
 
@@ -91,46 +90,33 @@ func TestReaderReadLine(t *testing.T) {
 	}{
 		{
 			name:        "reads all lines with no filter nor rules",
-			inputConfig: &CsvConfig{},
+			inputConfig: &CsvConfig{OrderedRows: true},
 			expected: [][]string{
+				{"col1", "col2", "col3"},
 				{"row_1000", "2", "3"},
 				{"row_11", "5", "6"},
 				{"row_99", "8", "9"},
 			},
-			errs: []error{
-				nil,
-				nil,
-				nil,
-			},
 		},
 		{
 			name:        "readlines with col1 and col2 filters",
-			inputConfig: &CsvConfig{ColFilters: []string{"col1", "col2"}},
+			inputConfig: &CsvConfig{ColFilters: []string{"col1", "col2"}, OrderedRows: true},
 			expected: [][]string{
+				{"col1", "col2"},
 				{"row_1000", "2"},
 				{"row_11", "5"},
 				{"row_99", "8"},
-			},
-			errs: []error{
-				nil,
-				nil,
-				nil,
 			},
 		},
 		{
 			name: "returns error when line fails rules, returning only valid rows",
 			inputConfig: &CsvConfig{
-				ColRules: testRule,
+				ColRules:    testRule,
+				OrderedRows: true,
 			},
 			expected: [][]string{
-				nil,
-				nil,
+				{"col1", "col2", "col3"},
 				{"row_99", "8", "9"},
-			},
-			errs: []error{
-				ErrInvalidRow,
-				ErrInvalidRow,
-				nil,
 			},
 		},
 	}
@@ -140,30 +126,18 @@ func TestReaderReadLine(t *testing.T) {
 
 		t.Run(test.name, func(t *testing.T) {
 
-			results, err := NewReader(testReader, test.inputConfig)
+			reader, err := NewReader(testReader, test.inputConfig)
 
 			if err != nil {
 				t.Errorf("Failed creating parser: %v", err)
 			}
 
 			i := 0
-
-			for {
-				row, err := results.ReadLine()
-
-				if errors.Is(err, io.EOF) {
-					break
+			for res := range reader.Process() {
+				if res != nil && !slices.Equal(res, test.expected[i]) {
+					t.Errorf("Expected %v, got %v", test.expected[i], res)
 				}
-
-				if !errors.Is(err, test.errs[i]) {
-					t.Errorf("Expected %v, got %v", test.errs[i], err)
-				}
-
-				if row != nil && !slices.Equal(row.Values(), test.expected[i]) {
-					t.Errorf("Expected %v, got %v", test.expected[i], row.Values())
-				}
-
-				i += 1
+				i++
 			}
 		})
 	}

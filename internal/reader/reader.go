@@ -14,8 +14,9 @@ import (
 var ErrInvalidRow = errors.New("invalid row")
 
 type CsvConfig struct {
-	ColFilters []string
-	ColRules   []parser.ColRules
+	ColFilters  []string
+	ColRules    []parser.ColRules
+	OrderedRows bool
 }
 
 type CsvReader struct {
@@ -30,8 +31,9 @@ type CsvReader struct {
 func NewReader(ioReader io.Reader, config *CsvConfig) (*CsvReader, error) {
 	if config == nil {
 		config = &CsvConfig{
-			ColFilters: make([]string, 0),
-			ColRules:   nil,
+			ColFilters:  make([]string, 0),
+			ColRules:    nil,
+			OrderedRows: false,
 		}
 	}
 
@@ -57,16 +59,33 @@ func NewReader(ioReader io.Reader, config *CsvConfig) (*CsvReader, error) {
 		config:      config,
 		reader:      csvReader,
 		headers:     headers,
-		readChan:    make(chan []string, 100),
-		outputChan:  make(chan []string, 100),
+		readChan:    make(chan []string, 50),
+		outputChan:  make(chan []string, 50),
 	}, nil
 }
 func (r *CsvReader) Process() chan []string {
 	go r.read()
 	r.outputChan <- r.headers.Only(r.config.ColFilters).Values()
 
-	go r.processRecords()
+	numWorkers := 200
+	if r.config.OrderedRows {
+		numWorkers = 1
+	}
+
+	wg := sync.WaitGroup{}
+
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go r.processRecords(&wg)
+	}
+	go r.done(&wg)
+
 	return r.outputChan
+}
+
+func (r *CsvReader) done(wg *sync.WaitGroup) {
+	wg.Wait()
+	close(r.outputChan)
 }
 
 func (r *CsvReader) read() {
@@ -85,41 +104,31 @@ func (r *CsvReader) read() {
 	}
 }
 
-func (r *CsvReader) processRecords() {
-	wg := sync.WaitGroup{}
-
+func (r *CsvReader) processRecords(wg *sync.WaitGroup) {
 	for record := range r.readChan {
-		wg.Add(1)
-		go func() {
-			row := row.NewRow(r.currentLine, r.headers.Values(), record)
+		row := row.NewRow(r.currentLine, r.headers.Values(), record)
 
-			if r.config.ColRules == nil {
-				r.currentLine++
-				r.outputChan <- row.Only(r.config.ColFilters).Values()
-			} else {
-				//TODO: How do colRules interact between them? If one is valid, should we return the row?
-				// Should we define the logical operator for interaction between columns? EX: (OR)col1:eq(5)||lte(10);col2:gte(10)
-				// Currently we are assuming that all columns' rules must be valid to return the row
+		if r.config.ColRules == nil {
+			r.currentLine++
+			r.outputChan <- row.Only(r.config.ColFilters).Values()
+		} else {
+			//TODO: How do colRules interact between them? If one is valid, should we return the row?
+			// Should we define the logical operator for interaction between columns? EX: (OR)col1:eq(5)||lte(10);col2:gte(10)
+			// Currently we are assuming that all columns' rules must be valid to return the row
 
-				approved := true
-				for _, colRule := range r.config.ColRules {
-					if !colRule.IsValid(row) {
-						approved = false
-					}
-				}
-				if approved {
-					r.currentLine++
-					r.outputChan <- row.Only(r.config.ColFilters).Values()
+			approved := true
+			for _, colRule := range r.config.ColRules {
+				if !colRule.IsValid(row) {
+					approved = false
 				}
 			}
-			wg.Done()
-		}()
+			if approved {
+				r.currentLine++
+				r.outputChan <- row.Only(r.config.ColFilters).Values()
+			}
+		}
 	}
-	close(r.outputChan)
-}
-
-func (r *CsvReader) Headers() *row.Row {
-	return r.headers.Only(r.config.ColFilters)
+	wg.Done()
 }
 
 func isColRulesValid(colRules []parser.ColRules, headers *row.Row) bool {
