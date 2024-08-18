@@ -59,15 +59,15 @@ func NewReader(ioReader io.Reader, config *CsvConfig) (*CsvReader, error) {
 		config:      config,
 		reader:      csvReader,
 		headers:     headers,
-		readChan:    make(chan []string, 50),
-		outputChan:  make(chan []string, 50),
+		readChan:    make(chan []string, 150),
+		outputChan:  make(chan []string, 150),
 	}, nil
 }
 func (r *CsvReader) Process() chan []string {
 	go r.read()
 	r.outputChan <- r.headers.Only(r.config.ColFilters).Values()
 
-	numWorkers := 200
+	numWorkers := 150
 	if r.config.OrderedRows {
 		numWorkers = 1
 	}
@@ -84,8 +84,8 @@ func (r *CsvReader) Process() chan []string {
 }
 
 func (r *CsvReader) done(wg *sync.WaitGroup) {
+	defer close(r.outputChan)
 	wg.Wait()
-	close(r.outputChan)
 }
 
 func (r *CsvReader) read() {
