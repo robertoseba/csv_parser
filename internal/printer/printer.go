@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/term"
@@ -16,9 +17,10 @@ type Printer struct {
 	lineNumber  int
 	style       lipgloss.Style
 	inputChan   <-chan []string
+	wg          *sync.WaitGroup
 }
 
-func NewPrinter(inputChan chan []string) *Printer {
+func NewPrinter(inputChan chan []string, wg *sync.WaitGroup) *Printer {
 	re := lipgloss.NewRenderer(os.Stdout)
 	baseStyle := re.NewStyle().Padding(0, 3).TabWidth(4)
 
@@ -29,6 +31,7 @@ func NewPrinter(inputChan chan []string) *Printer {
 		lineNumber:  0,
 		style:       baseStyle,
 		inputChan:   inputChan,
+		wg:          wg,
 	}
 }
 
@@ -39,6 +42,8 @@ func (p *Printer) Start() {
 	for rows := range p.inputChan {
 		p.printRow(rows)
 	}
+
+	p.wg.Done()
 
 }
 

@@ -1,11 +1,10 @@
 package app
 
 import (
-	"errors"
 	"fmt"
-	"io"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/robertoseba/csv_parser/internal/parser"
 	"github.com/robertoseba/csv_parser/internal/printer"
@@ -39,31 +38,13 @@ func Run(filename string, colFilters string, rowRules string) {
 		os.Exit(1)
 	}
 
-	printChannel := make(chan []string, 10)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 
-	printer := printer.NewPrinter(printChannel)
-
+	printer := printer.NewPrinter(csvReader.Process(), &wg)
 	go printer.Start()
 
-	for {
-		row, err := csvReader.ReadLine()
-
-		if errors.Is(err, io.EOF) {
-			break
-		}
-
-		if errors.Is(err, reader.ErrInvalidRow) {
-			continue
-		}
-
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Unexpected error reading line: %s\n", err)
-			os.Exit(1)
-		}
-		printChannel <- row.Values()
-	}
-
-	close(printChannel)
+	wg.Wait()
 }
 
 func splitFilters(colFilters string) []string {
