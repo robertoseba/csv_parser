@@ -39,9 +39,11 @@ func Run(filename string, colFilters string, rowRules string) {
 		os.Exit(1)
 	}
 
-	printer := printer.NewPrinter()
+	printChannel := make(chan []string, 10)
 
-	printer.PrintHeader(csvReader.Headers().Values())
+	printer := printer.NewPrinter(printChannel)
+
+	go printer.Start()
 
 	for {
 		row, err := csvReader.ReadLine()
@@ -58,8 +60,10 @@ func Run(filename string, colFilters string, rowRules string) {
 			fmt.Fprintf(os.Stderr, "Unexpected error reading line: %s\n", err)
 			os.Exit(1)
 		}
-		printer.PrintRow(row.Values())
+		printChannel <- row.Values()
 	}
+
+	close(printChannel)
 }
 
 func splitFilters(colFilters string) []string {

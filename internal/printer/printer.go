@@ -15,9 +15,10 @@ type Printer struct {
 	maxColWidth int
 	lineNumber  int
 	style       lipgloss.Style
+	inputChan   <-chan []string
 }
 
-func NewPrinter() *Printer {
+func NewPrinter(inputChan chan []string) *Printer {
 	re := lipgloss.NewRenderer(os.Stdout)
 	baseStyle := re.NewStyle().Padding(0, 3).TabWidth(4)
 
@@ -27,10 +28,21 @@ func NewPrinter() *Printer {
 		maxColWidth: 0,
 		lineNumber:  0,
 		style:       baseStyle,
+		inputChan:   inputChan,
 	}
 }
 
-func (p *Printer) PrintHeader(headers []string) {
+func (p *Printer) Start() {
+	headers := <-p.inputChan
+	p.printHeader(headers)
+
+	for rows := range p.inputChan {
+		p.printRow(rows)
+	}
+
+}
+
+func (p *Printer) printHeader(headers []string) {
 	if !p.onScreen {
 		fmt.Printf("%s\n", strings.Join(headers, ","))
 		return
@@ -52,7 +64,7 @@ func (p *Printer) PrintHeader(headers []string) {
 	p.lineNumber++
 }
 
-func (p *Printer) PrintRow(rows []string) {
+func (p *Printer) printRow(rows []string) {
 	if !p.onScreen {
 		fmt.Printf("%s\n", strings.Join(rows, ","))
 		return
