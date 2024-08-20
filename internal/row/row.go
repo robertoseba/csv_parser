@@ -1,34 +1,25 @@
 package row
 
+import "slices"
+
 type Row struct {
 	rowNumber int
-	data      map[string]string
+	data      []string
 	headers   []string
 }
 
 func NewRow(rowNumber int, headers []string, record []string) *Row {
 	row := &Row{
 		rowNumber: rowNumber,
-		data:      make(map[string]string),
+		data:      record,
 		headers:   headers,
-	}
-
-	for i, header := range headers {
-		row.data[header] = record[i]
 	}
 
 	return row
 }
 
 func (r *Row) Values() []string {
-	values := make([]string, len(r.data))
-	i := 0
-	for _, key := range r.headers {
-		values[i] = r.data[key]
-		i++
-	}
-
-	return values
+	return r.data
 }
 
 func (r *Row) LineNumber() int {
@@ -42,18 +33,20 @@ func (r *Row) Only(keys []string) *Row {
 
 	newFilteredRowData := make([]string, len(keys))
 
-	for idx, key := range keys {
-		newFilteredRowData[idx] = r.data[key]
+	for _, key := range keys {
+		idx := slices.Index(r.headers, key)
+		newFilteredRowData[idx] = r.data[idx]
 	}
 
 	return NewRow(r.rowNumber, keys, newFilteredRowData)
 }
 
 func (r *Row) HasColumn(key string) bool {
-	_, ok := r.data[key]
-	return ok
+	idx := slices.Index(r.headers, key)
+	return idx != -1
 }
 
 func (r *Row) GetColumn(key string) string {
-	return r.data[key]
+	idx := slices.Index(r.headers, key)
+	return r.data[idx]
 }

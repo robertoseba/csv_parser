@@ -67,7 +67,7 @@ func (r *CsvReader) Process() chan []string {
 	go r.read()
 	r.outputChan <- r.headers.Only(r.config.ColFilters).Values()
 
-	numWorkers := 150
+	numWorkers := 10
 	if r.config.OrderedRows {
 		numWorkers = 1
 	}
@@ -116,13 +116,14 @@ func (r *CsvReader) processRecords(wg *sync.WaitGroup) {
 			// Should we define the logical operator for interaction between columns? EX: (OR)col1:eq(5)||lte(10);col2:gte(10)
 			// Currently we are assuming that all columns' rules must be valid to return the row
 
-			approved := true
+			isValid := true
 			for _, colRule := range r.config.ColRules {
 				if !colRule.IsValid(row) {
-					approved = false
+					isValid = false
+					break
 				}
 			}
-			if approved {
+			if isValid {
 				r.currentLine++
 				r.outputChan <- row.Only(r.config.ColFilters).Values()
 			}

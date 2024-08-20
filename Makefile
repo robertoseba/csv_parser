@@ -8,9 +8,14 @@ default:
 tests:
 	go test  ./... 
 
-build:
-	go build -o ./build/	
+compile:
+	go build -o ./build/
 
 run:
 	go run . 
 
+view-profile:
+	go tool pprof cpu.pprof
+
+bench: 
+	go test -bench=. -benchmem ./...
