@@ -23,3 +23,9 @@ func main() {
 
 	app.Run(filename, *colFilterFlag, *colRulesFlag, *orderedFlag)
 }
+
+//TODO: remove workers and only have ordered output. It seems that the workers are not necessary for perfomance
+//TODO: Fix printer for when output columns are greater than screen size
+//TODO: Create readme
+//TODO: Create CI/CD
+//TODO: Publish project
