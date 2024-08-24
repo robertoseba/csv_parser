@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"sync"
 
 	"github.com/robertoseba/csv_parser/internal/parser"
 	"github.com/robertoseba/csv_parser/internal/row"
@@ -62,25 +61,14 @@ func NewReader(ioReader io.Reader, config *CsvConfig) (*CsvReader, error) {
 	}, nil
 }
 func (r *CsvReader) Process() chan []string {
-	go r.read()
+	go r.getDataFromReader()
 	r.outputChan <- r.headers.Only(r.config.ColFilters).Values()
-
-	wg := sync.WaitGroup{}
-
-	wg.Add(1)
-	go r.processRecords(&wg)
-
-	go r.done(&wg)
+	go r.processRecords()
 
 	return r.outputChan
 }
 
-func (r *CsvReader) done(wg *sync.WaitGroup) {
-	defer close(r.outputChan)
-	wg.Wait()
-}
-
-func (r *CsvReader) read() {
+func (r *CsvReader) getDataFromReader() {
 	for {
 		record, err := r.reader.Read()
 		if errors.Is(err, io.EOF) {
@@ -96,7 +84,9 @@ func (r *CsvReader) read() {
 	}
 }
 
-func (r *CsvReader) processRecords(wg *sync.WaitGroup) {
+func (r *CsvReader) processRecords() {
+	defer close(r.outputChan)
+
 	for record := range r.readChan {
 		row := row.NewRow(r.currentLine, r.headers.Values(), record)
 
@@ -121,7 +111,6 @@ func (r *CsvReader) processRecords(wg *sync.WaitGroup) {
 			}
 		}
 	}
-	wg.Done()
 }
 
 func isColRulesValid(colRules []parser.ColRules, headers *row.Row) bool {

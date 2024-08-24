@@ -2,25 +2,36 @@ package main
 
 import (
 	"flag"
-	"os"
-	"runtime/pprof"
 
 	"github.com/robertoseba/csv_parser/cmd/app"
 )
 
 func main() {
-	f, _ := os.Create("cpu.pprof")
-	defer f.Close()
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
+	options := parseCliOptions()
+	app.Run(
+		options.filename,
+		options.filterInput,
+		options.rulesInput,
+	)
+}
 
-	var colFilterFlag = flag.String("filter", "", "Filter the CSV file by the specified columns")
-	var colRulesFlag = flag.String("rules", "", "Apply rules to the specified columns. Ex: -rules \"col1:eq(100)\"")
+type inputOptions struct {
+	filename    string
+	filterInput string
+	rulesInput  string
+}
+
+func parseCliOptions() *inputOptions {
+	colFilterFlag := flag.String("filter", "", "Filter the CSV file by the specified columns")
+	colRulesFlag := flag.String("rules", "", "Apply rules to the specified columns. Ex: -rules \"col1:eq(100)\"")
 	flag.Parse()
 
 	filename := flag.Arg(0)
-
-	app.Run(filename, *colFilterFlag, *colRulesFlag)
+	return &inputOptions{
+		filename:    filename,
+		filterInput: *colFilterFlag,
+		rulesInput:  *colRulesFlag,
+	}
 }
 
 //TODO: Create readme

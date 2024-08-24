@@ -17,11 +17,14 @@ func Run(filename string, colFilters string, rowRules string) {
 		fmt.Fprintf(os.Stderr, "Error parsing rules: %s\n", err)
 		os.Exit(1)
 	}
+
 	csvConfig := &reader.CsvConfig{
 		ColFilters: splitFilters(colFilters),
 		ColRules:   rules,
 	}
+
 	var csvReader *reader.CsvReader
+
 	if filename == "" {
 		csvReader, err = reader.NewReader(readerStdin(), csvConfig)
 	} else {
@@ -29,6 +32,7 @@ func Run(filename string, colFilters string, rowRules string) {
 		csvReader, err = reader.NewReader(f, csvConfig)
 		defer f.Close()
 	}
+
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error generating csv: %s\n", err)
 		os.Exit(1)
