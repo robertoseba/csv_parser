@@ -14,9 +14,8 @@ import (
 var ErrInvalidRow = errors.New("invalid row")
 
 type CsvConfig struct {
-	ColFilters  []string
-	ColRules    []parser.ColRules
-	OrderedRows bool
+	ColFilters []string
+	ColRules   []parser.ColRules
 }
 
 type CsvReader struct {
@@ -31,9 +30,8 @@ type CsvReader struct {
 func NewReader(ioReader io.Reader, config *CsvConfig) (*CsvReader, error) {
 	if config == nil {
 		config = &CsvConfig{
-			ColFilters:  make([]string, 0),
-			ColRules:    nil,
-			OrderedRows: false,
+			ColFilters: make([]string, 0),
+			ColRules:   nil,
 		}
 	}
 
@@ -67,17 +65,11 @@ func (r *CsvReader) Process() chan []string {
 	go r.read()
 	r.outputChan <- r.headers.Only(r.config.ColFilters).Values()
 
-	numWorkers := 10
-	if r.config.OrderedRows {
-		numWorkers = 1
-	}
-
 	wg := sync.WaitGroup{}
 
-	for i := 0; i < numWorkers; i++ {
-		wg.Add(1)
-		go r.processRecords(&wg)
-	}
+	wg.Add(1)
+	go r.processRecords(&wg)
+
 	go r.done(&wg)
 
 	return r.outputChan

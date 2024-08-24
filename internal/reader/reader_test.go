@@ -90,7 +90,7 @@ func TestReaderReadLine(t *testing.T) {
 	}{
 		{
 			name:        "reads all lines with no filter nor rules",
-			inputConfig: &CsvConfig{OrderedRows: true},
+			inputConfig: &CsvConfig{},
 			expected: [][]string{
 				{"col1", "col2", "col3"},
 				{"row_1000", "2", "3"},
@@ -100,7 +100,7 @@ func TestReaderReadLine(t *testing.T) {
 		},
 		{
 			name:        "readlines with col1 and col2 filters",
-			inputConfig: &CsvConfig{ColFilters: []string{"col1", "col2"}, OrderedRows: true},
+			inputConfig: &CsvConfig{ColFilters: []string{"col1", "col2"}},
 			expected: [][]string{
 				{"col1", "col2"},
 				{"row_1000", "2"},
@@ -111,8 +111,7 @@ func TestReaderReadLine(t *testing.T) {
 		{
 			name: "returns error when line fails rules, returning only valid rows",
 			inputConfig: &CsvConfig{
-				ColRules:    testRule,
-				OrderedRows: true,
+				ColRules: testRule,
 			},
 			expected: [][]string{
 				{"col1", "col2", "col3"},

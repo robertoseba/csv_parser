@@ -18,11 +18,11 @@ func BenchmarkEntrypoint(b *testing.B) {
 	}(os.Stdout)
 	os.Stdout = os.NewFile(uintptr(syscall.Stdin), os.DevNull)
 
-	generateCSV(filename, 10, 1000)
+	generateCSV(filename, 10, 100000)
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		Run(filename, "col1,col2", "col1:eq(row_22)", false)
+		Run(filename, "col1,col2", "col1:eq(row_22)")
 	}
 	b.StopTimer()
 	os.Remove(filename)

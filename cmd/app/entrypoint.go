@@ -11,7 +11,7 @@ import (
 	"github.com/robertoseba/csv_parser/internal/reader"
 )
 
-func Run(filename string, colFilters string, rowRules string, ordered bool) {
+func Run(filename string, colFilters string, rowRules string) {
 	var err error
 
 	rules, err := parser.ParseRules(rowRules)
@@ -21,9 +21,8 @@ func Run(filename string, colFilters string, rowRules string, ordered bool) {
 	}
 
 	csvConfig := &reader.CsvConfig{
-		ColFilters:  splitFilters(colFilters),
-		ColRules:    rules,
-		OrderedRows: ordered,
+		ColFilters: splitFilters(colFilters),
+		ColRules:   rules,
 	}
 
 	var csvReader *reader.CsvReader
