@@ -27,3 +27,4 @@ func main() {
 //TODO: Create CI/CD
 //TODO: Publish project
 //TODO: Printer calc cell size not based on header but based on first row
+//TODO: accept file parameter in different order
