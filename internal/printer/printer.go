@@ -12,29 +12,41 @@ import (
 )
 
 type Printer struct {
-	onScreen    bool
-	separator   string
-	maxColWidth int
-	lineNumber  int
-	style       lipgloss.Style
-	inputChan   <-chan []string
-	wg          *sync.WaitGroup
+	onScreen         bool
+	separator        string
+	maxColWidth      []int
+	colOverflowAtIdx int
+	maxHeight        int
+	maxWidth         int
+	lineNumber       int
+	style            lipgloss.Style
+	inputChan        <-chan []string
+	wg               *sync.WaitGroup
 }
 
 func NewPrinter(inputChan chan []string, wg *sync.WaitGroup) *Printer {
+	var width, height int
+
+	width, height, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		width = 100
+		height = 80
+	}
+
 	re := lipgloss.NewRenderer(os.Stdout)
 	baseStyle := re.NewStyle().
 		Padding(0, 3).
 		TabWidth(4)
 
 	return &Printer{
-		onScreen:    term.IsTerminal(int(os.Stdout.Fd())),
-		separator:   "\t",
-		maxColWidth: 0,
-		lineNumber:  -1,
-		style:       baseStyle,
-		inputChan:   inputChan,
-		wg:          wg,
+		onScreen:   term.IsTerminal(int(os.Stdout.Fd())),
+		separator:  "\t",
+		maxHeight:  height,
+		maxWidth:   width,
+		lineNumber: -1,
+		style:      baseStyle,
+		inputChan:  inputChan,
+		wg:         wg,
 	}
 }
 
@@ -52,7 +64,8 @@ func (p *Printer) Start() {
 }
 
 func (p *Printer) printHeader(headers []string) {
-	p.calcCellSize(headers)
+	p.createMaxColWidth(headers)
+	// p.calcCellSize(headers)
 	headerStyle := p.style.Foreground(lipgloss.Color("#000000")).Background(lipgloss.Color("#D7FF87"))
 	p.print(headerStyle, headers)
 }
@@ -70,24 +83,21 @@ func (p *Printer) print(style lipgloss.Style, line []string) {
 		return
 	}
 
-	if p.lineNumber == 1 { //Printing headers
+	if p.lineNumber == 0 { //Printing headers
 		fmt.Print(style.Render("Line#"))
 	} else {
 		fmt.Print(style.Render(fmt.Sprintf("%5d", p.lineNumber)))
 	}
 
-	for _, cell := range line {
-		fmt.Print(style.Render(resizeCell(cell, p.maxColWidth)))
+	for idx, cell := range line {
+		if idx > p.colOverflowAtIdx {
+			fmt.Print(style.Foreground(lipgloss.Color("#BBBBBB")).Padding(0).Render("..."))
+			break
+		}
+		fmt.Print(style.Render(resizeCell(cell, p.maxColWidth[idx+1])))
 	}
 
 	fmt.Println()
-}
-
-func resizeCell(cell string, maxWidth int) string {
-	if len(cell) > maxWidth {
-		return cell[:maxWidth]
-	}
-	return cell + strings.Repeat(" ", maxWidth-len(cell))
 }
 
 func (p *Printer) terminate(start time.Time) {
@@ -101,12 +111,57 @@ func (p *Printer) terminate(start time.Time) {
 	p.wg.Done()
 }
 
-func (p *Printer) calcCellSize(headers []string) {
-	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
+// func (p *Printer) calcCellSize(line []string) {
+// for idx, cell range line {
+// 	fmt.Println(lipgloss.Width(cell))
+// }
 
-	// We add plus one to account for the line number column
-	cellWidth := physicalWidth / (len(headers) + 1)
-	p.style = p.style.MaxWidth(cellWidth)
+// We add plus one to account for the line number column
+// cellWidth := p.maxWidth / (len(headers) + 1)
 
-	p.maxColWidth = cellWidth
+// p.style = p.style.MaxWidth(cellWidth)
+
+// p.maxColWidth = cellWidth
+// }
+
+func (p *Printer) createMaxColWidth(headers []string) {
+	p.maxColWidth = make([]int, 0, len(headers)+1)
+	p.maxColWidth = append(p.maxColWidth, lipgloss.Width("Line#"))
+	p.colOverflowAtIdx = len(headers)
+
+	hPadding := p.style.GetHorizontalPadding()
+	totalWidth := p.maxColWidth[0] + hPadding // 6 is the padding
+
+	for idx, header := range headers {
+		width := lipgloss.Width(header)
+		if totalWidth+width+hPadding > p.maxWidth-lipgloss.Width("...")-hPadding {
+			p.colOverflowAtIdx = idx
+			width = p.maxWidth - totalWidth - hPadding - lipgloss.Width("...")
+			if width < 0 {
+				width = 0
+			}
+			p.maxColWidth = append(p.maxColWidth, width)
+			break
+		}
+		totalWidth += width + hPadding // 6 is the padding
+		p.maxColWidth = append(p.maxColWidth, width)
+	}
+	// fmt.Println("Max width: ", p.maxWidth)
+	// fmt.Println("Max col width: ", p.maxColWidth)
+	// if totalWidth > p.maxWidth {
+	// 	for idx, width := range p.maxColWidth {
+	// 		perc := float32(width) / float32(totalWidth)
+	// 		p.maxColWidth[idx] = int(perc * float32(p.maxWidth))
+	// 	}
+	// }
+	// fmt.Println("Max col width: ", p.maxColWidth)
+	// p.style.MaxWidth(p.maxWidth)
+
+}
+
+func resizeCell(cell string, maxWidth int) string {
+	if len(cell) > maxWidth {
+		return cell[:maxWidth]
+	}
+	return cell + strings.Repeat(" ", maxWidth-len(cell))
 }

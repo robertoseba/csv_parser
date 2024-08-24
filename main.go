@@ -23,9 +23,6 @@ func main() {
 	app.Run(filename, *colFilterFlag, *colRulesFlag)
 }
 
-//TODO: Fix printer for when output columns are greater than screen size
-//TODO: print total records showing / total records processed
-
 //TODO: Create readme
 //TODO: Create CI/CD
 //TODO: Publish project
