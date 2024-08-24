@@ -12,6 +12,7 @@ import (
 )
 
 func Run(filename string, colFilters string, rowRules string, ordered bool) {
+	var err error
 
 	rules, err := parser.ParseRules(rowRules)
 	if err != nil {

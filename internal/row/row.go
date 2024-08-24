@@ -1,6 +1,8 @@
 package row
 
-import "slices"
+import (
+	"slices"
+)
 
 type Row struct {
 	rowNumber int
@@ -33,11 +35,14 @@ func (r *Row) Only(keys []string) *Row {
 
 	newFilteredRowData := make([]string, len(keys))
 
-	for _, key := range keys {
+	for i, key := range keys {
 		idx := slices.Index(r.headers, key)
-		newFilteredRowData[idx] = r.data[idx]
-	}
+		if idx == -1 {
+			panic("Invalid headers")
+		}
 
+		newFilteredRowData[i] = r.data[idx]
+	}
 	return NewRow(r.rowNumber, keys, newFilteredRowData)
 }
 
