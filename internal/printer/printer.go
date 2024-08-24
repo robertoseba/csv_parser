@@ -35,7 +35,7 @@ func NewPrinter(inputChan chan []string, wg *sync.WaitGroup) *Printer {
 
 	re := lipgloss.NewRenderer(os.Stdout)
 	baseStyle := re.NewStyle().
-		Padding(0, 3).
+		Padding(0, 2).
 		TabWidth(4)
 
 	return &Printer{
@@ -94,7 +94,7 @@ func (p *Printer) print(style lipgloss.Style, line []string) {
 			fmt.Print(style.Foreground(lipgloss.Color("#BBBBBB")).Padding(0).Render("..."))
 			break
 		}
-		fmt.Print(style.Render(resizeCell(cell, p.maxColWidth[idx+1])))
+		fmt.Print(style.Render(resizeCell(cell, p.maxColWidth[idx])))
 	}
 
 	fmt.Println()
@@ -112,26 +112,26 @@ func (p *Printer) terminate(start time.Time) {
 }
 
 func (p *Printer) createMaxColWidth(headers []string) {
-	p.maxColWidth = make([]int, 0, len(headers)+1)
-	p.maxColWidth = append(p.maxColWidth, lipgloss.Width("Line#"))
+	p.maxColWidth = make([]int, 0, len(headers))
 	p.colOverflowAtIdx = len(headers)
 
 	hPadding := p.style.GetHorizontalPadding()
-	totalWidth := p.maxColWidth[0] + hPadding // 6 is the padding
+	totalWidth := lipgloss.Width("Line#") + hPadding // 6 is the padding
 
 	for idx, header := range headers {
-		width := lipgloss.Width(header)
-		if totalWidth+width+hPadding > p.maxWidth-lipgloss.Width("...")-hPadding {
+		textWidth := lipgloss.Width(header)
+		if totalWidth+textWidth+hPadding > p.maxWidth-lipgloss.Width("...")-hPadding {
 			p.colOverflowAtIdx = idx
-			width = p.maxWidth - totalWidth - hPadding - lipgloss.Width("...")
-			if width < 0 {
-				width = 0
+			textWidth = p.maxWidth - totalWidth - hPadding - lipgloss.Width("...")
+			if textWidth < 0 {
+				textWidth = 0
 			}
-			p.maxColWidth = append(p.maxColWidth, width)
+
+			p.maxColWidth = append(p.maxColWidth, textWidth)
 			break
 		}
-		totalWidth += width + hPadding // 6 is the padding
-		p.maxColWidth = append(p.maxColWidth, width)
+		totalWidth += textWidth + hPadding // 6 is the padding
+		p.maxColWidth = append(p.maxColWidth, textWidth)
 	}
 }
 
