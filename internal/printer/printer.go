@@ -31,7 +31,7 @@ func NewPrinter(inputChan chan []string, wg *sync.WaitGroup) *Printer {
 		onScreen:    term.IsTerminal(int(os.Stdout.Fd())),
 		separator:   "\t",
 		maxColWidth: 0,
-		lineNumber:  0,
+		lineNumber:  -1,
 		style:       baseStyle,
 		inputChan:   inputChan,
 		wg:          wg,
@@ -58,18 +58,22 @@ func (p *Printer) printHeader(headers []string) {
 }
 
 func (p *Printer) printRow(line []string) {
-	if !p.onScreen {
-		fmt.Printf("%s\n", strings.Join(line, ","))
-		return
-	}
-
 	rowStyle := p.style.Foreground(lipgloss.Color("#D7FF87")).Faint(p.lineNumber%2 == 0)
 	p.print(rowStyle, line)
 }
 
 func (p *Printer) print(style lipgloss.Style, line []string) {
+	p.lineNumber++
+
 	if !p.onScreen {
 		fmt.Printf("%s\n", strings.Join(line, ","))
+		return
+	}
+
+	if p.lineNumber == 1 { //Printing headers
+		fmt.Print(style.Render("Line#"))
+	} else {
+		fmt.Print(style.Render(fmt.Sprintf("%5d", p.lineNumber)))
 	}
 
 	for _, cell := range line {
@@ -77,7 +81,6 @@ func (p *Printer) print(style lipgloss.Style, line []string) {
 	}
 
 	fmt.Println()
-	p.lineNumber++
 }
 
 func resizeCell(cell string, maxWidth int) string {
@@ -90,7 +93,9 @@ func resizeCell(cell string, maxWidth int) string {
 func (p *Printer) terminate(start time.Time) {
 	elapsed := time.Since(start)
 	if p.onScreen {
-		fmt.Printf("\n Elapsed time: %s\n", elapsed)
+		fmt.Println()
+		fmt.Printf("%d lines printed\n", p.lineNumber)
+		fmt.Printf("Elapsed time: %s\n", elapsed)
 		fmt.Println()
 	}
 	p.wg.Done()
@@ -98,7 +103,9 @@ func (p *Printer) terminate(start time.Time) {
 
 func (p *Printer) calcCellSize(headers []string) {
 	physicalWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
-	cellWidth := physicalWidth / len(headers)
+
+	// We add plus one to account for the line number column
+	cellWidth := physicalWidth / (len(headers) + 1)
 	p.style = p.style.MaxWidth(cellWidth)
 
 	p.maxColWidth = cellWidth
