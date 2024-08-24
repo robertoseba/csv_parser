@@ -12,21 +12,16 @@ import (
 )
 
 func Run(filename string, colFilters string, rowRules string) {
-	var err error
-
 	rules, err := parser.ParseRules(rowRules)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error parsing rules: %s\n", err)
 		os.Exit(1)
 	}
-
 	csvConfig := &reader.CsvConfig{
 		ColFilters: splitFilters(colFilters),
 		ColRules:   rules,
 	}
-
 	var csvReader *reader.CsvReader
-
 	if filename == "" {
 		csvReader, err = reader.NewReader(readerStdin(), csvConfig)
 	} else {
@@ -39,12 +34,15 @@ func Run(filename string, colFilters string, rowRules string) {
 		os.Exit(1)
 	}
 
+	printResults(csvReader)
+
+}
+
+func printResults(csvReader *reader.CsvReader) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-
-	printer := printer.NewPrinter(csvReader.Process(), &wg)
-	go printer.Start()
-
+	printer := printer.NewPrinter(&wg)
+	go printer.PrintFrom(csvReader.Process())
 	wg.Wait()
 }
 
@@ -52,12 +50,10 @@ func splitFilters(colFilters string) []string {
 	if strings.Trim(colFilters, " ") == "" {
 		return nil
 	}
-
 	filters := strings.Split(colFilters, ",")
 	for i, filter := range filters {
 		filters[i] = strings.Trim(filter, " ")
 	}
-
 	return filters
 }
 
@@ -66,7 +62,6 @@ func readerStdin() *os.File {
 	if err != nil {
 		panic(err)
 	}
-
 	if fi.Mode()&os.ModeNamedPipe == 0 {
 		fmt.Println("No files or pipes provided")
 		os.Exit(1)
