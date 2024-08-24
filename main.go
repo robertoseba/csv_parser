@@ -26,3 +26,4 @@ func main() {
 //TODO: Create readme
 //TODO: Create CI/CD
 //TODO: Publish project
+//TODO: Printer calc cell size not based on header but based on first row
