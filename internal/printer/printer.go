@@ -111,19 +111,6 @@ func (p *Printer) terminate(start time.Time) {
 	p.wg.Done()
 }
 
-// func (p *Printer) calcCellSize(line []string) {
-// for idx, cell range line {
-// 	fmt.Println(lipgloss.Width(cell))
-// }
-
-// We add plus one to account for the line number column
-// cellWidth := p.maxWidth / (len(headers) + 1)
-
-// p.style = p.style.MaxWidth(cellWidth)
-
-// p.maxColWidth = cellWidth
-// }
-
 func (p *Printer) createMaxColWidth(headers []string) {
 	p.maxColWidth = make([]int, 0, len(headers)+1)
 	p.maxColWidth = append(p.maxColWidth, lipgloss.Width("Line#"))
@@ -146,17 +133,6 @@ func (p *Printer) createMaxColWidth(headers []string) {
 		totalWidth += width + hPadding // 6 is the padding
 		p.maxColWidth = append(p.maxColWidth, width)
 	}
-	// fmt.Println("Max width: ", p.maxWidth)
-	// fmt.Println("Max col width: ", p.maxColWidth)
-	// if totalWidth > p.maxWidth {
-	// 	for idx, width := range p.maxColWidth {
-	// 		perc := float32(width) / float32(totalWidth)
-	// 		p.maxColWidth[idx] = int(perc * float32(p.maxWidth))
-	// 	}
-	// }
-	// fmt.Println("Max col width: ", p.maxColWidth)
-	// p.style.MaxWidth(p.maxWidth)
-
 }
 
 func resizeCell(cell string, maxWidth int) string {
