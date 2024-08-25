@@ -6,6 +6,7 @@ import (
 
 	"github.com/robertoseba/csv_parser/cmd/app"
 	"github.com/robertoseba/csv_parser/internal/printer"
+	"golang.org/x/term"
 )
 
 func main() {
@@ -15,7 +16,7 @@ func main() {
 	// TODO: accept file parameter in different order
 
 	inputOptions := app.ParseCliOptions()
-	printer := printer.NewPrinter(false)
+	printer := printer.NewPrinter(term.IsTerminal(int(os.Stdout.Fd())))
 
 	err := app.Run(inputOptions, printer)
 
