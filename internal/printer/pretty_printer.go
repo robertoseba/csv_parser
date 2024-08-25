@@ -13,6 +13,7 @@ import (
 
 type PrettyPrinter struct {
 	maxColWidth      []int
+	minCellWidth     int
 	colOverflowAtIdx int
 	maxHeight        int
 	maxWidth         int
@@ -35,10 +36,11 @@ func newPrettyPrinter() *PrettyPrinter {
 		TabWidth(4)
 
 	return &PrettyPrinter{
-		maxHeight:  height,
-		maxWidth:   width,
-		lineNumber: 0,
-		style:      baseStyle,
+		minCellWidth: 6,
+		maxHeight:    height,
+		maxWidth:     width,
+		lineNumber:   0,
+		style:        baseStyle,
 	}
 }
 
@@ -86,12 +88,12 @@ func (p *PrettyPrinter) print(style lipgloss.Style, row []string) {
 	if p.lineNumber == 0 { //Printing headers
 		fmt.Print(style.Render("Line#"))
 	} else {
-		fmt.Print(style.Render(fmt.Sprintf("%5d", p.lineNumber)))
+		fmt.Print(style.Foreground(lipgloss.Color("#6F6F6F")).Render(fmt.Sprintf("%5d", p.lineNumber)))
 	}
 
 	for idx, cell := range row {
 		if idx > p.colOverflowAtIdx {
-			fmt.Print(style.Foreground(lipgloss.Color("#BBBBBB")).Padding(0).Render("..."))
+			fmt.Print(style.Foreground(lipgloss.Color("#6F6F6F")).Padding(0).Render("..."))
 			break
 		}
 		fmt.Print(style.Render(resizeCell(cell, p.maxColWidth[idx])))
@@ -108,8 +110,12 @@ func (p *PrettyPrinter) calcMaxColWidth(row []string) {
 	hPadding := p.style.GetHorizontalPadding()
 	totalWidth := lipgloss.Width("Line#") + hPadding
 
-	for idx, header := range row {
-		textWidth := lipgloss.Width(header)
+	for idx, cell := range row {
+		textWidth := lipgloss.Width(cell)
+		if textWidth < p.minCellWidth {
+			textWidth = p.minCellWidth
+		}
+
 		if totalWidth+textWidth+hPadding > p.maxWidth-lipgloss.Width("...")-hPadding {
 			p.colOverflowAtIdx = idx
 			textWidth = p.maxWidth - totalWidth - hPadding - lipgloss.Width("...")
@@ -123,11 +129,19 @@ func (p *PrettyPrinter) calcMaxColWidth(row []string) {
 		totalWidth += textWidth + hPadding
 		p.maxColWidth = append(p.maxColWidth, textWidth)
 	}
+
+	if totalWidth < p.maxWidth && p.colOverflowAtIdx == len(row) {
+		extraSpacePerCell := (p.maxWidth - totalWidth) / len(p.maxColWidth)
+		for idx, cellWidth := range p.maxColWidth {
+
+			p.maxColWidth[idx] = cellWidth + extraSpacePerCell
+		}
+	}
 }
 
 func resizeCell(cell string, maxWidth int) string {
 	if len(cell) > maxWidth {
-		return cell[:maxWidth]
+		return fmt.Sprintf("%s...", cell[:maxWidth-lipgloss.Width("...")])
 	}
 	return cell + strings.Repeat(" ", maxWidth-len(cell))
 }
