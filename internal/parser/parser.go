@@ -7,7 +7,7 @@ import (
 )
 
 var ErrInvalidRule = errors.New("invalid rule format")
-var ErrInvalidOperator = errors.New("invalid rule logical operator format")
+var ErrInvalidOperator = errors.New("we currently only support one type of logical operator per column rules")
 var ErrInvalidRuleType = errors.New("invalid rule type")
 
 /**

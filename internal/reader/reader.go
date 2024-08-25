@@ -51,7 +51,7 @@ func NewReader(ioReader io.Reader, config *CsvConfig) (*CsvReader, error) {
 	headers := row.NewRow(0, headersArr, headersArr)
 
 	if config.ColRules != nil && !isColRulesValid(config.ColRules, headers) {
-		return nil, errors.New("rules have invalid column")
+		return nil, errors.New("rules have one or more invalid columns")
 	}
 
 	if !isFilterColsValid(config.ColFilters, headers) {

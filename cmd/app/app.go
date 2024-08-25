@@ -2,7 +2,6 @@ package app
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -21,7 +20,7 @@ func Run(inputOptions *InputOptions, printer printer.IPrinter) error {
 
 	rules, err := parser.ParseRules(inputOptions.RulesInput)
 	if err != nil {
-		return fmt.Errorf("error parsing rules: %w", err)
+		return err
 	}
 
 	filters := parseFilters(inputOptions.FilterInput)
