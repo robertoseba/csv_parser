@@ -24,7 +24,7 @@ func Run(inputOptions *InputOptions, printer printer.IPrinter) error {
 		return fmt.Errorf("error parsing rules: %w", err)
 	}
 
-	filters := splitFilters(inputOptions.FilterInput)
+	filters := parseFilters(inputOptions.FilterInput)
 
 	config := reader.NewConfig(filters, rules)
 
@@ -42,7 +42,7 @@ func Run(inputOptions *InputOptions, printer printer.IPrinter) error {
 	return nil
 }
 
-func splitFilters(colFilters string) []string {
+func parseFilters(colFilters string) []string {
 	if strings.Trim(colFilters, " ") == "" {
 		return nil
 	}

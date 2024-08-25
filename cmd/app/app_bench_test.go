@@ -4,26 +4,30 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
-	"syscall"
 	"testing"
 
+	printer "github.com/robertoseba/csv_parser/internal/printer/test"
 	"golang.org/x/exp/rand"
 )
 
-func BenchmarkEntrypoint(b *testing.B) {
+func BenchmarkRun(b *testing.B) {
 	filename := "test.csv"
 
-	defer func(stdout *os.File) {
-		os.Stdout = stdout
-	}(os.Stdout)
-	os.Stdout = os.NewFile(uintptr(syscall.Stdin), os.DevNull)
+	generateCSV(filename, 10, 10000)
 
-	generateCSV(filename, 10, 100000)
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		Run(filename, "col1,col2", "col1:eq(row_22)")
+	input := &InputOptions{
+		Filename:    filename,
+		FilterInput: "col1,col2",
+		RulesInput:  "col1:eq(row_22)||eq(row_200)",
 	}
+
+	stubPrinter := printer.NewStubPrinter(false)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		Run(input, stubPrinter)
+	}
+
 	b.StopTimer()
 	os.Remove(filename)
 }
