@@ -1,41 +1,26 @@
 package main
 
 import (
-	"flag"
+	"fmt"
+	"os"
 
 	"github.com/robertoseba/csv_parser/cmd/app"
+	"github.com/robertoseba/csv_parser/internal/printer"
 )
 
 func main() {
-	options := parseCliOptions()
-	app.Run(
-		options.filename,
-		options.filterInput,
-		options.rulesInput,
-	)
-}
+	// TODO: Create readme
+	// TODO: Create CI/CD
+	// TODO: Publish project
+	// TODO: accept file parameter in different order
 
-type inputOptions struct {
-	filename    string
-	filterInput string
-	rulesInput  string
-}
+	inputOptions := app.ParseCliOptions()
+	printer := printer.NewPrinter(false)
 
-func parseCliOptions() *inputOptions {
-	colFilterFlag := flag.String("filter", "", "Filter the CSV file by the specified columns")
-	colRulesFlag := flag.String("rules", "", "Apply rules to the specified columns. Ex: -rules \"col1:eq(100)\"")
-	flag.Parse()
+	err := app.Run(inputOptions, printer)
 
-	filename := flag.Arg(0)
-	return &inputOptions{
-		filename:    filename,
-		filterInput: *colFilterFlag,
-		rulesInput:  *colRulesFlag,
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		os.Exit(1)
 	}
 }
-
-//TODO: Create readme
-//TODO: Create CI/CD
-//TODO: Publish project
-//TODO: Printer calc cell size not based on header but based on first row
-//TODO: accept file parameter in different order

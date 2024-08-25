@@ -17,6 +17,13 @@ type CsvConfig struct {
 	ColRules   []parser.ColRules
 }
 
+func NewConfig(colFilters []string, colRules []parser.ColRules) *CsvConfig {
+	return &CsvConfig{
+		ColFilters: colFilters,
+		ColRules:   colRules,
+	}
+}
+
 type CsvReader struct {
 	currentLine int
 	config      *CsvConfig
