@@ -10,11 +10,6 @@ import (
 )
 
 func main() {
-	// TODO: Create readme
-	// TODO: Create CI/CD
-	// TODO: Publish project
-	// TODO: accept file parameter in different order
-
 	inputOptions := app.ParseCliOptions()
 	printer := printer.NewPrinter(term.IsTerminal(int(os.Stdout.Fd())))
 
