@@ -24,4 +24,4 @@ jobs:
           version: v1.17.2
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_API_TOKEN}}
+          GITHUB_TOKEN: ${{secrets.API_TOKEN}}
