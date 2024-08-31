@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"os"
 	"strings"
 	"sync"
@@ -53,24 +52,6 @@ func parseFilters(colFilters string) []string {
 }
 
 func newInputReader(filename string) (*os.File, error) {
-	if filename == "" {
-		return readerStdin()
-	}
-	return readerFile(filename)
-}
-
-func readerStdin() (*os.File, error) {
-	fi, err := os.Stdin.Stat()
-	if err != nil {
-		return nil, err
-	}
-	if fi.Mode()&os.ModeNamedPipe == 0 {
-		return nil, errors.New("no files or pipes provided")
-	}
-	return os.Stdin, nil
-}
-
-func readerFile(filename string) (*os.File, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err

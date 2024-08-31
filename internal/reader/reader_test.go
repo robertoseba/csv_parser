@@ -109,7 +109,7 @@ func TestReaderReadLine(t *testing.T) {
 			},
 		},
 		{
-			name: "returns error when line fails rules, returning only valid rows",
+			name: "returns returning only valid rows from rules",
 			inputConfig: &CsvConfig{
 				ColRules: testRule,
 			},
