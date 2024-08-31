@@ -6,18 +6,18 @@ A simple tool for parsing CSV files in the CLI with options for column and row f
 
 Here's an example of how you can use this tool:
 
-Sometimes you got a big CSV file and want to only get rows for a single user.
+Sometimes you got a big CSV file, with multiple columns and want to only get rows for a single user.
 
 ```bash
 csv_parser user-list.csv --filter "username, email" --rules "email:eq(user1@example.com)"
 ```
 
-The command above will print only the columns username and email and only the rows that email match "user1@example.com"
+The command above will print only the columns `username` and `email` and only the rows that email match `user1@example.com`
 
 ## Flags:
 
-- <b>filter</b> (optional) - Applies filtering to column names.
-- <b>rules</b> (optional) - Applies filtering to rows based on rules defined for each column.<u> It works independently from the filter flag.</u> For instance, you can filter to show only a user's name and apply a rule to only get rows by the user's email.
+- <b>--filter</b> (optional) - Applies filtering to column names.
+- <b>--rules</b> (optional) - Applies filtering to rows based on rules defined for each column.<u> It works independently from the filter flag.</u> For instance, you can filter to show only a user's name and apply a rule to only get rows by the user's email.
 
 ## Filter
 
@@ -26,10 +26,10 @@ It can also be useful for when you want to create a new CSV file based on the or
 
 Let's say I have a csv file (users.csv) with the following headers: `name,email,phone,address`.
 
-If I want to generate a new file with `email,name` in that order, here's the cli command for it:
+If I want to generate a new file with columns `email,name`:
 
 ```bash
-csv_parser users.csv --filter "email" > newfile.csv
+csv_parser users.csv --filter "email,name" > newfile.csv
 ```
 
 ## Rules
