@@ -19,6 +19,7 @@ type PrettyPrinter struct {
 	maxWidth         int
 	lineNumber       int
 	style            lipgloss.Style
+	headers          []string
 }
 
 func newPrettyPrinter() *PrettyPrinter {
@@ -49,43 +50,46 @@ func (p *PrettyPrinter) PrintFrom(inputChan <-chan []string, wg *sync.WaitGroup)
 	defer wg.Done()
 	defer p.wrapUpPrint(startTime)
 
-	headers := <-inputChan
-
+	p.headers = <-inputChan
 	// Since the headers can have column names that are longer
 	// than the actual data, we use the first row data to calculate
 	// the max width of each column.
 	firstRow := <-inputChan
 
 	if len(firstRow) == 0 {
-		p.calcMaxColWidth(headers)
+		p.calcMaxColWidth(p.headers)
 	} else {
 		p.calcMaxColWidth(firstRow)
 	}
 
-	p.printHeader(headers)
+	p.printHeader(p.headers)
 	p.printRow(firstRow)
 
 	for row := range inputChan {
 		p.printRow(row)
+
+		if !p.shouldKeepPrinting() {
+			break
+		}
 	}
 }
 
 func (p *PrettyPrinter) printHeader(headers []string) {
 	headerStyle := p.style.Foreground(lipgloss.Color("#000000")).Background(lipgloss.Color("#D7FF87"))
-	p.print(headerStyle, headers)
+	p.print(headerStyle, headers, true)
 }
 
 func (p *PrettyPrinter) printRow(line []string) {
 	rowStyle := p.style.Foreground(lipgloss.Color("#D7FF87")).Faint(p.lineNumber%2 == 0)
-	p.print(rowStyle, line)
+	p.print(rowStyle, line, false)
 }
 
-func (p *PrettyPrinter) print(style lipgloss.Style, row []string) {
+func (p *PrettyPrinter) print(style lipgloss.Style, row []string, isHeaders bool) {
 	if len(row) == 0 {
 		return
 	}
 
-	if p.lineNumber == 0 { //Printing headers
+	if isHeaders {
 		fmt.Print(style.Render("Line#"))
 	} else {
 		fmt.Print(style.Foreground(lipgloss.Color("#6F6F6F")).Render(fmt.Sprintf("%5d", p.lineNumber)))
@@ -141,9 +145,26 @@ func (p *PrettyPrinter) calcMaxColWidth(row []string) {
 
 func resizeCell(cell string, maxWidth int) string {
 	if len(cell) > maxWidth {
+		if maxWidth < lipgloss.Width("...") {
+			return ""
+		}
 		return fmt.Sprintf("%s...", cell[:maxWidth-lipgloss.Width("...")])
 	}
 	return cell + strings.Repeat(" ", maxWidth-len(cell))
+}
+
+func (p *PrettyPrinter) shouldKeepPrinting() bool {
+	if p.lineNumber%(p.maxHeight-2) == 0 {
+		fmt.Println("Press Enter to continue or Ctrl+C to exit")
+		var input string
+		fmt.Scanln(&input)
+
+		if input == "q" {
+			return false
+		}
+		p.printHeader(p.headers)
+	}
+	return true
 }
 
 func (p *PrettyPrinter) wrapUpPrint(start time.Time) {
