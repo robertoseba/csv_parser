@@ -168,9 +168,7 @@ func (p *PrettyPrinter) shouldKeepPrinting() bool {
 }
 
 func (p *PrettyPrinter) wrapUpPrint(start time.Time) {
-	elapsed := time.Since(start)
 	fmt.Println()
 	fmt.Printf("%d lines printed\n", p.lineNumber-1)
-	fmt.Printf("Elapsed time: %s\n", elapsed)
 	fmt.Println()
 }
