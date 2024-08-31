@@ -155,11 +155,11 @@ func resizeCell(cell string, maxWidth int) string {
 
 func (p *PrettyPrinter) shouldKeepPrinting() bool {
 	if p.lineNumber%(p.maxHeight-2) == 0 {
-		fmt.Println("Press Enter to continue or Ctrl+C to exit")
+		fmt.Println("Press Enter to continue or type q to exit")
 		var input string
 		fmt.Scanln(&input)
 
-		if input == "q" {
+		if strings.ToLower(input) == "q" {
 			return false
 		}
 		p.printHeader(p.headers)
