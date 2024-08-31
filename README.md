@@ -1,5 +1,7 @@
 # CSV Parser Tool
 
+![csv parser interface](docs/screen.gif)
+
 A simple tool for parsing CSV files in the CLI with options for column and row filtering.
 
 Here's an example of how you can use this tool:
