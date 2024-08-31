@@ -1,8 +1,9 @@
 # CSV Parser Tool
 
-A simple tool for parsing CSV files in the CLI with options for column and row filtering. It's written in Golang and it's reasonably fast for most use cases.
+A simple tool for parsing CSV files in the CLI with options for column and row filtering.
 
 Here's an example of how you can use this tool:
+
 Sometimes you got a big CSV file and want to only get rows for a single user.
 
 ```bash
@@ -21,33 +22,31 @@ The command above will print only the columns username and email and only the ro
 It's based on the header values and takes the orders of the columns as inputed in the cli command.
 It can also be useful for when you want to create a new CSV file based on the original one but only want certain columns.
 
-Let's say I have a csv file (users.csv) with the following headers: "name,email,phone,address".
+Let's say I have a csv file (users.csv) with the following headers: `name,email,phone,address`.
 
-If I want to generate a new file with "name,phone,email" in that order, here's the cli command for it:
+If I want to generate a new file with `email,name` in that order, here's the cli command for it:
 
 ```bash
-csv_parser users.csv --filter "name,phone,email" > newfile.csv
+csv_parser users.csv --filter "email" > newfile.csv
 ```
 
 ## Rules
 
 You can apply multiple rules to a column. Rules for each column must be separated by `;`
 
-Syntax: `<column-name>:<operator>(<value>)<logical-operator><operator>(<value>);`
+Syntax: `<column-name>:<rule-type>(<value>)<optional-logical-operator><rule-type>(<value>);`
 
-### Examples:
+### Example:
 
 ```bash
 
 $ csv_parser --rules "col1:eq(bob)||eq(junior);col2:neq(10)&&lte(20)"
 
-$ csv_parser --rules "col2:neq(10)&&lte(20)"
-
 ```
 
 > If the rule value is a number the parser will try to compare values as being numerical. Otherwise values will be compared lexicographically.
 
-### Operators:
+### Rule types:
 
 - eq - Equal
 - neq - Not equals
@@ -63,7 +62,7 @@ $ csv_parser --rules "col2:neq(10)&&lte(20)"
 
 ### Use case example:
 
-Given the following csv:
+Given the following csv (users.csv):
 
 ```csv
 name,score,test
