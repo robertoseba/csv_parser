@@ -84,3 +84,8 @@ I want to retrieve only names for rows where test_2 or test_3 score is 100 or mo
 ```bash
 csv_parser users.csv --filter "name" --rules "test:eq(test_2)||eq(test_3);score:gte(100)"
 ```
+
+## Installation:
+
+Download the binary here:
+[Releases](https://github.com/robertoseba/csv_parser/releases)
