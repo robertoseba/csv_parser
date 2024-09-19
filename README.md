@@ -18,6 +18,7 @@ The command above will print only the columns `username` and `email` and only th
 
 - <b>--filter</b> (optional) - Applies filtering to column names.
 - <b>--rules</b> (optional) - Applies filtering to rows based on rules defined for each column.<u> It works independently from the filter flag.</u> For instance, you can filter to show only a user's name and apply a rule to only get rows by the user's email.
+- <b>--headersOnly</b> (optional) - Prints only the headers for the csv file.
 
 ## Filter
 
