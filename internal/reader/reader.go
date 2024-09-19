@@ -15,12 +15,14 @@ var ErrInvalidRow = errors.New("invalid row")
 type CsvConfig struct {
 	ColFilters []string
 	ColRules   []parser.ColRules
+	HeaderOnly bool
 }
 
-func NewConfig(colFilters []string, colRules []parser.ColRules) *CsvConfig {
+func NewConfig(colFilters []string, colRules []parser.ColRules, headerOnly bool) *CsvConfig {
 	return &CsvConfig{
 		ColFilters: colFilters,
 		ColRules:   colRules,
+		HeaderOnly: headerOnly,
 	}
 }
 
@@ -38,6 +40,7 @@ func NewReader(ioReader io.Reader, config *CsvConfig) (*CsvReader, error) {
 		config = &CsvConfig{
 			ColFilters: nil,
 			ColRules:   nil,
+			HeaderOnly: false,
 		}
 	}
 
@@ -69,8 +72,19 @@ func NewReader(ioReader io.Reader, config *CsvConfig) (*CsvReader, error) {
 }
 
 func (r *CsvReader) Process() chan []string {
-	go r.getDataFromReader()
+	if r.config.HeaderOnly {
+		r.outputChan <- []string{"Headers"}
+		for _, header := range r.headers.Values() {
+			r.outputChan <- []string{header}
+		}
+		close(r.outputChan)
+		return r.outputChan
+	}
+
 	r.outputChan <- r.headers.Only(r.config.ColFilters).Values()
+
+	go r.getDataFromReader()
+
 	go r.processRecords()
 
 	return r.outputChan

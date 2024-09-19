@@ -118,6 +118,18 @@ func TestReaderReadLine(t *testing.T) {
 				{"row_99", "8", "9"},
 			},
 		},
+		{
+			name: "returns headers only",
+			inputConfig: &CsvConfig{
+				HeaderOnly: true,
+			},
+			expected: [][]string{
+				{"Headers"},
+				{"col1"},
+				{"col2"},
+				{"col3"},
+			},
+		},
 	}
 
 	for _, test := range tests {
