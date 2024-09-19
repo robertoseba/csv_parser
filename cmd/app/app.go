@@ -24,7 +24,7 @@ func Run(inputOptions *InputOptions, printer printer.IPrinter) error {
 
 	filters := parseFilters(inputOptions.FilterInput)
 
-	config := reader.NewConfig(filters, rules)
+	config := reader.NewConfig(filters, rules, inputOptions.HeaderOnly)
 
 	csvReader, err := reader.NewReader(inputReader, config)
 	if err != nil {

@@ -10,11 +10,13 @@ type InputOptions struct {
 	Filename    string
 	FilterInput string
 	RulesInput  string
+	HeaderOnly  bool
 }
 
 func ParseCliOptions() *InputOptions {
 	colFilterFlag := flag.String("filter", "", "Filter the CSV file by the specified columns from header. Ex: -filter \"username,email\"")
 	colRulesFlag := flag.String("rules", "", "Apply rules to the specified columns. Ex: -rules \"email:eq(user@test.com)\"")
+	headerOnlyFlag := flag.Bool("headersOnly", false, "Prints only the headers of the CSV file")
 
 	if len(os.Args) <= 1 {
 		wrongUsage()
@@ -34,6 +36,7 @@ func ParseCliOptions() *InputOptions {
 		Filename:    filename,
 		FilterInput: *colFilterFlag,
 		RulesInput:  *colRulesFlag,
+		HeaderOnly:  *headerOnlyFlag,
 	}
 }
 

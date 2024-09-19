@@ -2,7 +2,7 @@
 default:
 	@echo "Please use one of the following commands:"
 	@echo "make test"
-	@echo "make build"
+	@echo "make compile"
 	@echo "make run"
 
 tests:
